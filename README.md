@@ -24,7 +24,7 @@
 #### Step 3: Add the dependency with latest version
 ```gradle
     dependencies {
-        implementation 'com.github.badboy91vn:BilMobileAdsAndroid:1.0.0'
+        implementation 'https://github.com/valueimpression/BilMobileAdsAndroid:1.0.0'
     }
 ```
 
