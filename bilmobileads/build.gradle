@@ -1,0 +1,36 @@
+apply plugin: 'com.android.library'
+apply plugin: 'com.kezong.fat-aar'
+apply plugin: 'com.github.dcendents.android-maven'
+group='com.github.badboy91vn'
+
+android {
+    compileSdkVersion 29
+    buildToolsVersion "29.0.3"
+
+    defaultConfig {
+        minSdkVersion 19
+        targetSdkVersion 29
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+}
+
+dependencies {
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+    implementation files('libs/prebid-mobile-sdk-core-1.6.jar')
+    embed project(path: ':play-services-ads-lite-17.2.0', configuration:'default')
+    embed project(path: ':play-services-ads-17.2.0', configuration:'default')
+    embed project(path: ':play-services-ads-identifier-16.0.0', configuration:'default')
+    embed project(path: ':play-services-ads-base-17.2.0', configuration:'default')
+    embed project(path: ':play-services-basement-16.0.1', configuration:'default')
+    embed project(path: ':play-services-gass-17.2.0', configuration:'default')
+//    implementation 'com.google.android.gms:play-services-ads:17.2.0'
+
+    implementation 'androidx.appcompat:appcompat:1.1.0'
+}
