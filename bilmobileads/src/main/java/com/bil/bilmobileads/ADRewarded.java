@@ -137,6 +137,9 @@ public class ADRewarded {
                     PBMobileAds.getInstance().log("RewarededVideo load placement '" + placement + "': SUCC");
                     isFetchingAD = false;
 
+                    if (adDelegate == null) return;
+                    adDelegate.onRewardedAdLoaded("onRewardedAdLoaded");
+
                     if (isLoadAfterPreload) {
                         isLoadAfterPreload = false;
                         if (isReady()) show();
@@ -148,7 +151,9 @@ public class ADRewarded {
                     PBMobileAds.getInstance().log("RewardedVideo load placement '" + placement + "' failed: " + errorCode);
                     isFetchingAD = false;
 
-                    if (!isLoadAfterPreload) deplayCallPreload();
+                    if (adDelegate == null) return;
+                    adDelegate.onRewardedAdFailedToLoad("onRewardedAdFailedToLoad");
+                    //  if (!isLoadAfterPreload) deplayCallPreload();
                 }
             });
         } else {
@@ -247,14 +252,14 @@ public class ADRewarded {
             public void onRewardedAdClosed() {
                 isFetchingAD = false;
                 if (adDelegate == null) return;
-                adDelegate.onRewardedAdOpened("onRewardedAdClosed");
+                adDelegate.onRewardedAdClosed("onRewardedAdClosed");
             }
 
             @Override
             public void onUserEarnedReward(@NonNull RewardItem reward) {
                 isFetchingAD = false;
                 if (adDelegate == null) return;
-                adDelegate.onRewardedAdOpened("onUserEarnedReward");
+                adDelegate.onUserEarnedReward("onUserEarnedReward");
             }
 
             @Override
@@ -263,16 +268,16 @@ public class ADRewarded {
                 if (adDelegate == null) return;
                 switch (errorCode) {
                     case ERROR_CODE_INTERNAL_ERROR:
-                        adDelegate.onRewardedAdOpened("INTERNAL_ERROR");
+                        adDelegate.onRewardedAdFailedToShow("INTERNAL_ERROR");
                         break;
                     case ERROR_CODE_AD_REUSED:
-                        adDelegate.onRewardedAdOpened("AD_REUSED");
+                        adDelegate.onRewardedAdFailedToShow("AD_REUSED");
                         break;
                     case ERROR_CODE_NOT_READY:
-                        adDelegate.onRewardedAdOpened("NOT_READY");
+                        adDelegate.onRewardedAdFailedToShow("NOT_READY");
                         break;
                     case ERROR_CODE_APP_NOT_FOREGROUND:
-                        adDelegate.onRewardedAdOpened("APP_NOT_FOREGROUND");
+                        adDelegate.onRewardedAdFailedToShow("APP_NOT_FOREGROUND");
                         break;
                 }
             }

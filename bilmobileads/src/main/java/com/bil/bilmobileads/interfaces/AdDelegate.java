@@ -8,7 +8,7 @@ public interface AdDelegate {
     public void onAdLoaded(String data);
 
     /*
-    * Called just before presenting the user a full screen view, such as a browser, in response to clicking on an ad.
+    * Called just before presenting the user a full screen view (ADInterstitial only), such as a browser, in response to clicking on an ad.
     * */
     public void onAdImpression(String data);
 
