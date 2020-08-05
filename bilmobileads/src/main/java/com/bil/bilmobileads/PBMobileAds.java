@@ -6,6 +6,7 @@ import android.util.Log;
 import android.webkit.WebView;
 
 import com.bil.bilmobileads.entity.ADFormat;
+import com.bil.bilmobileads.entity.ADType;
 import com.bil.bilmobileads.entity.AdInfor;
 import com.bil.bilmobileads.entity.AdUnitObj;
 import com.bil.bilmobileads.entity.HostCustom;
@@ -13,6 +14,7 @@ import com.bil.bilmobileads.entity.HostCustom;
 import com.bil.bilmobileads.interfaces.ResultCallback;
 //import com.bil.bilmobileads.interfaces.TimerCompleteListener;
 import com.consentmanager.sdk.CMPConsentTool;
+import com.google.android.gms.ads.AdSize;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -71,18 +73,18 @@ public class PBMobileAds {
     void getADConfig(final String adUnit, final ResultCallback resultAD) {
         this.log("Start Request Config adUnit: " + adUnit);
 
-//        final TimerRecall timerRecall = new TimerRecall(Constants.RECALL_CONFIGID_SERVER, 1000);
-//        timerRecall.setListener(new TimerCompleteListener() {
-//            @Override
-//            public void doWork() {
-//                getADConfig(adUnit, resultAD);
-//            }
-//        });
+        //        final TimerRecall timerRecall = new TimerRecall(Constants.RECALL_CONFIGID_SERVER, 1000);
+        //        timerRecall.setListener(new TimerCompleteListener() {
+        //            @Override
+        //            public void doWork() {
+        //                getADConfig(adUnit, resultAD);
+        //            }
+        //        });
 
         HttpApi httpApi = new HttpApi<JSONObject>(Constants.GET_DATA_CONFIG + adUnit, new ResultCallback<JSONObject, Exception>() {
             @Override
             public void success(JSONObject dataJSON) {
-//                timerRecall.cancel();
+                //  timerRecall.cancel();
                 try {
                     pbServerEndPoint = dataJSON.getString("pbServerEndPoint");
                     gdprConfirm = dataJSON.getBoolean("gdprConfirm");
@@ -114,7 +116,40 @@ public class PBMobileAds {
                         adInforList.add(adInfor);
                     }
 
-                    AdUnitObj adUnitObj = new AdUnitObj(placement, type, defaultType, isActive, adInforList);
+                    AdUnitObj adUnitObj;
+                    // Set ad size if type is banner
+                    if (type.equalsIgnoreCase(String.valueOf(ADType.Banner))) {
+                        String width = adunitJsonObj.has("width") && !adunitJsonObj.getString("width").isEmpty() ? adunitJsonObj.getString("width") : "320";
+                        String height = adunitJsonObj.has("height") && !adunitJsonObj.getString("height").isEmpty() ? adunitJsonObj.getString("height") : "50";
+                        String bannerSize = width + "x" + height;
+
+                        AdSize adSize;
+                        switch (bannerSize) {
+                            case "320x50":
+                                adSize = new AdSize(320, 50);
+                                break;
+                            case "320x100":
+                                adSize = new AdSize(320, 100);
+                                break;
+                            case "300x250":
+                                adSize = new AdSize(300, 250);
+                                break;
+                            case "468x60":
+                                adSize = new AdSize(468, 60);
+                                break;
+                            case "728x90":
+                                adSize = new AdSize(728, 90);
+                                break;
+                            default:
+                                adSize = new AdSize(320, 50);
+                                break;
+                        }
+
+                        adUnitObj = new AdUnitObj(placement, type, defaultType, isActive, adInforList, adSize);
+                    } else {
+                        adUnitObj = new AdUnitObj(placement, type, defaultType, isActive, adInforList);
+                    }
+
                     listAdUnitObj.add(adUnitObj);
 
                     // Return result

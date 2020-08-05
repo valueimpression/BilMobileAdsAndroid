@@ -316,7 +316,7 @@ public class ADBanner {
         this.adDelegate = adDelegate;
     }
 
-    public void setAdSize(BannerSize size) {
+    private void setAdSize(BannerSize size) {
         this.curBannerSize = this.getBannerSize(size);
     }
 
