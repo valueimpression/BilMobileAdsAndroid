@@ -164,6 +164,9 @@ public class ADBanner {
             TargetingParams.setGDPRConsentString(CMPStorageConsentManager.getConsentString(PBMobileAds.getInstance().getContextApp()));
         }
 
+        // Set AD Size
+        this.curBannerSize = this.curBannerSize == null && this.adUnitObj.adSize != null ? this.adUnitObj.adSize : this.curBannerSize;
+
         AdInfor adInfor;
         if (this.adFormatDefault.equals(ADFormat.VAST)) {
             AdInfor info = this.getAdInfor(true);
