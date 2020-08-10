@@ -1,7 +1,7 @@
 apply plugin: 'com.android.library'
 apply plugin: 'com.kezong.fat-aar'
 apply plugin: 'com.github.dcendents.android-maven'
-group='com.github.badboy91vn'
+group='com.github.valueimpression'
 
 android {
     compileSdkVersion 29
