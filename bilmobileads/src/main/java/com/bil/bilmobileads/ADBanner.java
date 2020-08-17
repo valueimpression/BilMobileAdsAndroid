@@ -8,7 +8,7 @@ import com.consentmanager.sdk.CMPConsentTool;
 import com.consentmanager.sdk.callbacks.OnCloseCallback;
 import com.consentmanager.sdk.model.CMPConfig;
 import com.consentmanager.sdk.storage.CMPStorageConsentManager;
-import com.consentmanager.sdk.storage.CMPStorageV1;
+//import com.consentmanager.sdk.storage.CMPStorageV1;
 import com.google.android.gms.ads.AdListener;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdSize;
@@ -70,12 +70,6 @@ public class ADBanner {
 
         this.adView = adView;
         this.placement = placement;
-
-        final PublisherAdRequest.Builder builder = new PublisherAdRequest.Builder();
-        if (PBMobileAds.getInstance().isTestMode) {
-            builder.addTestDevice(Constants.DEVICE_ID_TEST);
-        }
-        this.amRequest = builder.build();
 
         this.timerRecall = new TimerRecall(Constants.RECALL_CONFIGID_SERVER, 1000, new TimerCompleteListener() {
             @Override
@@ -209,6 +203,11 @@ public class ADBanner {
         this.adView.removeAllViews();
         this.adView.addView(this.amBanner);
 
+        PublisherAdRequest.Builder builder = new PublisherAdRequest.Builder();
+        if (PBMobileAds.getInstance().isTestMode) {
+            builder.addTestDevice(Constants.DEVICE_ID_TEST);
+        }
+        this.amRequest = builder.build();
         this.adUnit.fetchDemand(this.amRequest, new OnCompleteListener() {
             @Override
             public void onComplete(ResultCode resultCode) {

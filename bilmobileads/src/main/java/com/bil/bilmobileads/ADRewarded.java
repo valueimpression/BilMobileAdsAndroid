@@ -63,11 +63,6 @@ public class ADRewarded {
 
         this.activityAd = activity;
         this.placement = placement;
-        final PublisherAdRequest.Builder builder = new PublisherAdRequest.Builder();
-        if (PBMobileAds.getInstance().isTestMode) {
-            builder.addTestDevice(Constants.DEVICE_ID_TEST);
-        }
-        this.amRequest = builder.build();
 
         this.timerRecall = new TimerRecall(Constants.RECALL_CONFIGID_SERVER, 1000, new TimerCompleteListener() {
             @Override
@@ -218,6 +213,11 @@ public class ADRewarded {
         this.amRewarded = new RewardedAd(PBMobileAds.getInstance().getContextApp().getApplicationContext(), adInfor.adUnitID);
 
         this.isFetchingAD = true;
+        PublisherAdRequest.Builder builder = new PublisherAdRequest.Builder();
+        if (PBMobileAds.getInstance().isTestMode) {
+            builder.addTestDevice(Constants.DEVICE_ID_TEST);
+        }
+        this.amRequest = builder.build();
         this.adUnit.fetchDemand(this.amRequest, new OnCompleteListener() {
             @Override
             public void onComplete(ResultCode resultCode) {
