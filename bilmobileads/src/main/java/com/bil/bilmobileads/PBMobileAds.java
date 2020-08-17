@@ -141,7 +141,7 @@ public class PBMobileAds {
                                 adSize = new AdSize(728, 90);
                                 break;
                             default:
-                                adSize = new AdSize(320, 50);
+                                adSize = new AdSize(-1, -2);
                                 break;
                         }
 
