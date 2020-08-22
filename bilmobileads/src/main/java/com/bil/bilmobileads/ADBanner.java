@@ -292,7 +292,6 @@ public class ADBanner {
             this.stopAutoRefresh();
 
             if (resultCode == ResultCode.NO_BIDS) {
-                this.adFormatDefault = this.adFormatDefault == ADFormat.HTML ? ADFormat.VAST : ADFormat.HTML;
                 this.deplayCallPreload();
             } else if (resultCode == ResultCode.TIMEOUT) {
                 this.deplayCallPreload();

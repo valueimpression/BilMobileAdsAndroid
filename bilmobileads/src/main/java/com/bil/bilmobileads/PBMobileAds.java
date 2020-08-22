@@ -1,7 +1,10 @@
 
 package com.bil.bilmobileads;
 
+import android.app.Activity;
 import android.content.Context;
+import android.content.res.Configuration;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.webkit.WebView;
 
@@ -141,7 +144,14 @@ public class PBMobileAds {
                                 adSize = new AdSize(728, 90);
                                 break;
                             default:
-                                adSize = new AdSize(-1, -2);
+                                DisplayMetrics displayMetrics = new DisplayMetrics();
+                                ((Activity) getContextApp()).getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
+                                float heightDP = displayMetrics.heightPixels / displayMetrics.density;
+                                if (heightDP <= 720) {
+                                    adSize = new AdSize(320, 50);
+                                } else {
+                                    adSize = new AdSize(728, 90);
+                                }
                                 break;
                         }
 
@@ -224,6 +234,10 @@ public class PBMobileAds {
         } else if (gender == GENDER.UNKNOWN) {
             TargetingParams.setGender(TargetingParams.GENDER.UNKNOWN);
         }
+    }
+
+    public void setYearOfBirth(int yearOfBirth) throws Exception {
+        TargetingParams.setYearOfBirth(yearOfBirth);
     }
 
     public boolean log(String object) {

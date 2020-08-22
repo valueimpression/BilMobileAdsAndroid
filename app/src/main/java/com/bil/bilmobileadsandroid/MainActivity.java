@@ -11,7 +11,6 @@ import com.bil.bilmobileads.ADBanner;
 import com.bil.bilmobileads.ADInterstitial;
 import com.bil.bilmobileads.ADRewarded;
 import com.bil.bilmobileads.PBMobileAds;
-import com.bil.bilmobileads.entity.BannerSize;
 import com.bil.bilmobileads.interfaces.AdDelegate;
 import com.bil.bilmobileads.interfaces.AdRewardedDelegate;
 

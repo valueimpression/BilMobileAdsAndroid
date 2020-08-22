@@ -153,7 +153,6 @@ public class ADRewarded {
             });
         } else {
             if (resultCode == ResultCode.NO_BIDS) {
-                this.adFormatDefault = this.adFormatDefault.equals(ADFormat.HTML) ? ADFormat.VAST : ADFormat.HTML;
                 // Ko gọi lại preload nếu user gọi load() đầu tiên
                 if (!this.isLoadAfterPreload) this.deplayCallPreload();
             } else if (resultCode == ResultCode.TIMEOUT) {
