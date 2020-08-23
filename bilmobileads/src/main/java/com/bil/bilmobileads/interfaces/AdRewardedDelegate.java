@@ -1,5 +1,7 @@
 package com.bil.bilmobileads.interfaces;
 
+import com.google.android.gms.ads.rewarded.RewardItem;
+
 public interface AdRewardedDelegate {
 
     public void onRewardedAdLoaded(String data);
@@ -8,7 +10,7 @@ public interface AdRewardedDelegate {
 
     public void onRewardedAdClosed(String data);
 
-    public void onUserEarnedReward(String data);
+    public void onUserEarnedReward(RewardItem data);
 
     public void onRewardedAdFailedToLoad(String err);
 

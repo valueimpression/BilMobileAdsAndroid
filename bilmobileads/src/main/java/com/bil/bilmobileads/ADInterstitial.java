@@ -125,7 +125,6 @@ public class ADInterstitial {
             this.amInterstitial.loadAd(this.amRequest);
         } else {
             if (resultCode == ResultCode.NO_BIDS) {
-                this.adFormatDefault = this.adFormatDefault.equals(ADFormat.HTML) ? ADFormat.VAST : ADFormat.HTML;
                 // Ko gọi lại preload nếu user gọi load() đầu tiên
                 if (!this.isLoadAfterPreload) this.deplayCallPreload();
             } else if (resultCode == ResultCode.TIMEOUT) {
@@ -151,7 +150,7 @@ public class ADInterstitial {
         }
 
         // Check and set default
-        this.adFormatDefault = this.adFormatDefault == null ? this.adUnitObj.defaultType : this.adFormatDefault;
+        this.adFormatDefault = this.adUnitObj.defaultType;
         // set adFormat theo loại duy nhất có
         if (adUnitObj.adInfor.size() < 2) {
             this.adFormatDefault = this.adUnitObj.adInfor.get(0).isVideo ? ADFormat.VAST : ADFormat.HTML;
@@ -219,22 +218,15 @@ public class ADInterstitial {
             public void onAdLoaded() {
                 super.onAdLoaded();
 
-                // Đã gọi lên ad server succ
-                isFetchingAD = false;
-                if (amInterstitial.isLoaded() == true) {
-                    if (isLoadAfterPreload) {
-                        amInterstitial.show();
-                        isLoadAfterPreload = false;
-                    }
-
-                    if (adDelegate == null) return;
-                    adDelegate.onAdLoaded("Ad Interstitial Ready with placement " + placement);
-                } else {
+                if (isLoadAfterPreload) {
+                    amInterstitial.show();
                     isLoadAfterPreload = false;
-
-                    if (adDelegate == null) return;
-                    adDelegate.onAdLoaded("onAdLoaded Ad Interstitial Not Ready");
                 }
+
+                isFetchingAD = false;
+                PBMobileAds.getInstance().log("onAdLoaded");
+                if (adDelegate == null) return;
+                adDelegate.onAdLoaded("Ad Interstitial Ready with placement " + placement);
             }
 
             @Override
@@ -242,30 +234,37 @@ public class ADInterstitial {
                 super.onAdClosed();
 
                 isFetchingAD = false;
+                PBMobileAds.getInstance().log("onAdClosed");
                 if (adDelegate == null) return;
                 adDelegate.onAdClosed("onAdClosed");
             }
 
             @Override
-            public void onAdFailedToLoad(int i) {
-                super.onAdFailedToLoad(i);
+            public void onAdFailedToLoad(int errorCode) {
+                super.onAdFailedToLoad(errorCode);
 
-                isFetchingAD = false;
-                if (adDelegate == null) return;
-                switch (i) {
+                String messErr = "";
+                switch (errorCode) {
                     case AdRequest.ERROR_CODE_INTERNAL_ERROR:
-                        adDelegate.onAdFailedToLoad("ERROR_CODE_INTERNAL_ERROR");
+                        messErr = "ERROR_CODE_INTERNAL_ERROR";
                         break;
                     case AdRequest.ERROR_CODE_INVALID_REQUEST:
-                        adDelegate.onAdFailedToLoad("ERROR_CODE_INVALID_REQUEST");
+                        messErr = "ERROR_CODE_INVALID_REQUEST";
                         break;
                     case AdRequest.ERROR_CODE_NETWORK_ERROR:
-                        adDelegate.onAdFailedToLoad("ERROR_CODE_NETWORK_ERROR");
+                        messErr = "ERROR_CODE_NETWORK_ERROR";
                         break;
                     case AdRequest.ERROR_CODE_NO_FILL:
-                        adDelegate.onAdFailedToLoad("ERROR_CODE_NO_FILL");
+                        messErr = "ERROR_CODE_NO_FILL";
+                        adFormatDefault = adFormatDefault.equals(ADFormat.VAST) ? ADFormat.HTML : ADFormat.VAST;
+                        if (!isLoadAfterPreload) deplayCallPreload();
                         break;
                 }
+
+                isFetchingAD = false;
+                PBMobileAds.getInstance().log(messErr);
+                if (adDelegate == null) return;
+                adDelegate.onAdFailedToLoad(messErr);
             }
 
             @Override
@@ -273,6 +272,7 @@ public class ADInterstitial {
                 super.onAdImpression();
 
                 isFetchingAD = false;
+                PBMobileAds.getInstance().log("onAdImpression");
                 if (adDelegate == null) return;
                 adDelegate.onAdImpression("onAdImpression");
             }
@@ -282,6 +282,7 @@ public class ADInterstitial {
                 super.onAdLeftApplication();
 
                 isFetchingAD = false;
+                PBMobileAds.getInstance().log("onAdLeftApplication");
                 if (adDelegate == null) return;
                 adDelegate.onAdLeftApplication("onAdLeftApplication");
             }

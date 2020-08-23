@@ -143,7 +143,7 @@ public class ADBanner {
         }
 
         // Check and set default
-        this.adFormatDefault = this.adFormatDefault == null ? this.adUnitObj.defaultType : this.adFormatDefault;
+        this.adFormatDefault = this.adUnitObj.defaultType;
         // set adformat theo loại duy nhất có
         if (adUnitObj.adInfor.size() < 2) {
             this.adFormatDefault = this.adUnitObj.adInfor.get(0).isVideo ? ADFormat.VAST : ADFormat.HTML;
@@ -226,12 +226,14 @@ public class ADBanner {
                         isLoadBannerSucc = true;
                         amBanner.setAdSizes(new AdSize(width, height));
 
+                        PBMobileAds.getInstance().log("onAdLoaded: " + placement + " success");
                         if (adDelegate == null) return;
                         adDelegate.onAdLoaded("onAdLoaded: " + placement);
                     }
 
                     @Override
                     public void failure(@NonNull PbFindSizeError error) {
+                        PBMobileAds.getInstance().log("onAdLoaded: " + placement + " error - " + error.getDescription());
                         if (adDelegate == null) return;
                         adDelegate.onAdFailedToLoad(error.getDescription());
                     }
@@ -241,34 +243,42 @@ public class ADBanner {
             @Override
             public void onAdClosed() {
                 super.onAdClosed();
+
+                PBMobileAds.getInstance().log("onAdClosed");
                 if (adDelegate == null) return;
                 adDelegate.onAdClosed("onAdClosed");
             }
 
             @Override
-            public void onAdFailedToLoad(int i) {
-                super.onAdFailedToLoad(i);
-                if (adDelegate == null) return;
+            public void onAdFailedToLoad(int errorCode) {
+                super.onAdFailedToLoad(errorCode);
 
-                switch (i) {
+                String messErr = "";
+                switch (errorCode) {
                     case AdRequest.ERROR_CODE_INTERNAL_ERROR:
-                        adDelegate.onAdFailedToLoad("ERROR_CODE_INTERNAL_ERROR");
+                        messErr = "ERROR_CODE_INTERNAL_ERROR";
                         break;
                     case AdRequest.ERROR_CODE_INVALID_REQUEST:
-                        adDelegate.onAdFailedToLoad("ERROR_CODE_INVALID_REQUEST");
+                        messErr = "ERROR_CODE_INVALID_REQUEST";
                         break;
                     case AdRequest.ERROR_CODE_NETWORK_ERROR:
-                        adDelegate.onAdFailedToLoad("ERROR_CODE_NETWORK_ERROR");
+                        messErr = "ERROR_CODE_NETWORK_ERROR";
                         break;
                     case AdRequest.ERROR_CODE_NO_FILL:
-                        adDelegate.onAdFailedToLoad("ERROR_CODE_NO_FILL");
+                        messErr = "ERROR_CODE_NO_FILL";
                         break;
                 }
+
+                PBMobileAds.getInstance().log(messErr);
+                if (adDelegate == null) return;
+                adDelegate.onAdFailedToLoad(messErr);
             }
 
             @Override
             public void onAdImpression() {
                 super.onAdImpression();
+
+                PBMobileAds.getInstance().log("onAdImpression");
                 if (adDelegate == null) return;
                 adDelegate.onAdImpression("onAdImpression");
             }
@@ -276,6 +286,8 @@ public class ADBanner {
             @Override
             public void onAdLeftApplication() {
                 super.onAdLeftApplication();
+
+                PBMobileAds.getInstance().log("onAdLeftApplication");
                 if (adDelegate == null) return;
                 adDelegate.onAdLeftApplication("onAdLeftApplication");
             }

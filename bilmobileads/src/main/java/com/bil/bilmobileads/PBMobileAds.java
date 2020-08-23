@@ -124,7 +124,8 @@ public class PBMobileAds {
                     if (type.equalsIgnoreCase(String.valueOf(ADType.Banner))) {
                         String width = adunitJsonObj.has("width") && !adunitJsonObj.getString("width").isEmpty() ? adunitJsonObj.getString("width") : "320";
                         String height = adunitJsonObj.has("height") && !adunitJsonObj.getString("height").isEmpty() ? adunitJsonObj.getString("height") : "50";
-                        String bannerSize = width + "x" + height;
+//                        String bannerSize = width + "x" + height;
+                        String bannerSize = 1 + "x" + 2;
 
                         AdSize adSize;
                         switch (bannerSize) {

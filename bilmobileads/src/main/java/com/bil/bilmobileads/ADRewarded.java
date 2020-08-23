@@ -9,6 +9,7 @@ import com.consentmanager.sdk.callbacks.OnCloseCallback;
 import com.consentmanager.sdk.model.CMPConfig;
 import com.consentmanager.sdk.storage.CMPStorageConsentManager;
 import com.consentmanager.sdk.storage.CMPStorageV1;
+import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.doubleclick.PublisherAdRequest;
 import com.google.android.gms.ads.rewarded.RewardItem;
 import com.google.android.gms.ads.rewarded.RewardedAd;
@@ -178,7 +179,7 @@ public class ADRewarded {
         }
 
         // Check and set default
-        this.adFormatDefault = this.adFormatDefault == null ? this.adUnitObj.defaultType : this.adFormatDefault;
+        this.adFormatDefault = this.adUnitObj.defaultType;
         // set adFormat theo loại duy nhất có
         if (adUnitObj.adInfor.size() < 2) {
             this.adFormatDefault = this.adUnitObj.adInfor.get(0).isVideo ? ADFormat.VAST : ADFormat.HTML;
@@ -243,6 +244,8 @@ public class ADRewarded {
             @Override
             public void onRewardedAdOpened() {
                 isFetchingAD = false;
+
+                PBMobileAds.getInstance().log("onRewardedAdOpened");
                 if (adDelegate == null) return;
                 adDelegate.onRewardedAdOpened("onRewardedAdOpened");
             }
@@ -250,6 +253,8 @@ public class ADRewarded {
             @Override
             public void onRewardedAdClosed() {
                 isFetchingAD = false;
+
+                PBMobileAds.getInstance().log("onRewardedAdClosed");
                 if (adDelegate == null) return;
                 adDelegate.onRewardedAdClosed("onRewardedAdClosed");
             }
@@ -257,28 +262,36 @@ public class ADRewarded {
             @Override
             public void onUserEarnedReward(@NonNull RewardItem reward) {
                 isFetchingAD = false;
+
+                PBMobileAds.getInstance().log("onUserEarnedReward: " + reward.getType());
                 if (adDelegate == null) return;
-                adDelegate.onUserEarnedReward("onUserEarnedReward");
+                adDelegate.onUserEarnedReward(reward);
             }
 
             @Override
             public void onRewardedAdFailedToShow(int errorCode) {
+                super.onRewardedAdFailedToShow(errorCode);
+
                 isFetchingAD = false;
-                if (adDelegate == null) return;
+                String messErr = "";
                 switch (errorCode) {
                     case ERROR_CODE_INTERNAL_ERROR:
-                        adDelegate.onRewardedAdFailedToShow("INTERNAL_ERROR");
+                        messErr = "ERROR_CODE_INTERNAL_ERROR";
                         break;
                     case ERROR_CODE_AD_REUSED:
-                        adDelegate.onRewardedAdFailedToShow("AD_REUSED");
+                        messErr = "ERROR_CODE_AD_REUSED";
                         break;
                     case ERROR_CODE_NOT_READY:
-                        adDelegate.onRewardedAdFailedToShow("NOT_READY");
+                        messErr = "ERROR_CODE_NOT_READY";
                         break;
                     case ERROR_CODE_APP_NOT_FOREGROUND:
-                        adDelegate.onRewardedAdFailedToShow("APP_NOT_FOREGROUND");
+                        messErr = "ERROR_CODE_APP_NOT_FOREGROUND";
                         break;
                 }
+
+                PBMobileAds.getInstance().log(messErr);
+                if (adDelegate == null) return;
+                adDelegate.onRewardedAdFailedToShow(messErr);
             }
         });
     }

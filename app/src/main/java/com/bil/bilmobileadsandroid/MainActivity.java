@@ -33,7 +33,7 @@ public class MainActivity extends AppCompatActivity {
         this.adBanner.setAutoRefreshMillis(30000);
         this.adBanner.load();
 
-//        this.adInterstitial = new ADInterstitial("1002");
+//        this.adInterstitial = new ADInterstitial("3bad632c-26f8-4137-ae27-05325ee1b30c");
 //        this.adInterstitial.preLoad();
 
 //        this.adRewarded = new ADRewarded(this, "1003");
@@ -43,7 +43,7 @@ public class MainActivity extends AppCompatActivity {
         btnShowFull.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-//                adInterstitial.load();
+                adInterstitial.load();
 //                adRewarded.load();
             }
         });
