@@ -25,7 +25,7 @@
 ```gradle
     dependencies {
         implementation 'com.google.android.gms:play-services-ads:17.2.0'
-        implementation 'com.github.valueimpression:BilMobileAdsAndroid:1.0.7'
+        implementation 'com.github.valueimpression:BilMobileAdsAndroid:1.0.9'
     }
 ```
 
