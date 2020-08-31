@@ -8,8 +8,6 @@ import com.consentmanager.sdk.CMPConsentTool;
 import com.consentmanager.sdk.callbacks.OnCloseCallback;
 import com.consentmanager.sdk.model.CMPConfig;
 import com.consentmanager.sdk.storage.CMPStorageConsentManager;
-import com.consentmanager.sdk.storage.CMPStorageV1;
-import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.doubleclick.PublisherAdRequest;
 import com.google.android.gms.ads.rewarded.RewardItem;
 import com.google.android.gms.ads.rewarded.RewardedAd;
@@ -213,7 +211,7 @@ public class ADRewarded {
         this.amRewarded = new RewardedAd(PBMobileAds.getInstance().getContextApp().getApplicationContext(), adInfor.adUnitID);
 
         this.isFetchingAD = true;
-        PublisherAdRequest.Builder builder = new PublisherAdRequest.Builder();
+        final PublisherAdRequest.Builder builder = new PublisherAdRequest.Builder();
         if (PBMobileAds.getInstance().isTestMode) {
             builder.addTestDevice(Constants.DEVICE_ID_TEST);
         }

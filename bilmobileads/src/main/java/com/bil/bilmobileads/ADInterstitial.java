@@ -200,7 +200,7 @@ public class ADInterstitial {
         this.amInterstitial.setAdUnitId(adInfor.adUnitID);
 
         this.isFetchingAD = true;
-        PublisherAdRequest.Builder builder = new PublisherAdRequest.Builder();
+        final PublisherAdRequest.Builder builder = new PublisherAdRequest.Builder();
         if (PBMobileAds.getInstance().isTestMode) {
             builder.addTestDevice(Constants.DEVICE_ID_TEST);
         }
