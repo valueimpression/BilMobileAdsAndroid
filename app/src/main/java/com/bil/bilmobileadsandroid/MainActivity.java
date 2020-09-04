@@ -3,12 +3,14 @@ package com.bil.bilmobileadsandroid;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.FrameLayout;
 
 import com.bil.bilmobileads.ADBanner;
 import com.bil.bilmobileads.ADInterstitial;
+import com.bil.bilmobileads.ADNative;
 import com.bil.bilmobileads.ADRewarded;
 import com.bil.bilmobileads.PBMobileAds;
 import com.bil.bilmobileads.interfaces.AdDelegate;
@@ -17,6 +19,7 @@ import com.bil.bilmobileads.interfaces.AdRewardedDelegate;
 public class MainActivity extends AppCompatActivity {
 
     ADBanner adBanner;
+    ADNative adNative;
     ADInterstitial adInterstitial;
     ADRewarded adRewarded;
 
@@ -28,23 +31,25 @@ public class MainActivity extends AppCompatActivity {
         PBMobileAds.getInstance().initialize(this, true);
 
         FrameLayout bannerView = findViewById(R.id.bannerView);
-        //  init banner
-        this.adBanner = new ADBanner(bannerView, "1001");
-        this.adBanner.setAutoRefreshMillis(30000);
-        this.adBanner.load();
+        this.adBanner = new ADBanner(bannerView, "13b7495e-1e87-414a-afcd-ef8a9034bd22");
 
-//        this.adInterstitial = new ADInterstitial("3bad632c-26f8-4137-ae27-05325ee1b30c");
-//        this.adInterstitial.preLoad();
+//        this.adNative = new ADNative(bannerView, "1004");
+
+//        this.adInterstitial = new ADInterstitial("1002");
 
 //        this.adRewarded = new ADRewarded(this, "1003");
-//        this.adRewarded.preLoad();
 
         Button btnShowFull = (Button) findViewById(R.id.showFull);
         btnShowFull.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                adInterstitial.load();
-//                adRewarded.load();
+                if (adInterstitial != null) {
+                    adInterstitial.load();
+                }
+
+                if (adRewarded != null) {
+                    adRewarded.load();
+                }
             }
         });
 

@@ -1,9 +1,12 @@
 package com.bil.bilmobileads.entity;
 
+import com.bil.bilmobileads.Constants;
+
 public enum ADType {
-    Banner("banner"),
-    Interstitial("interstitial"),
-    Rewarded("rewarded");
+    Banner(Constants.BANNER),
+    SmartBanner(Constants.SMART_BANNER),
+    Interstitial(Constants.INTERSTITIAL),
+    Rewarded(Constants.REWARED);
 
     private String type;
 

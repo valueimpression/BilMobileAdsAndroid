@@ -15,6 +15,7 @@ import com.consentmanager.sdk.CMPConsentTool;
 import com.consentmanager.sdk.callbacks.OnCloseCallback;
 import com.consentmanager.sdk.model.CMPConfig;
 import com.consentmanager.sdk.storage.CMPStorageConsentManager;
+import com.facebook.ads.BidderTokenProvider;
 import com.google.android.gms.ads.AdListener;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdSize;
@@ -22,7 +23,6 @@ import com.google.android.gms.ads.doubleclick.PublisherAdRequest;
 import com.google.android.gms.ads.doubleclick.PublisherAdView;
 
 import org.prebid.mobile.AdUnit;
-import org.prebid.mobile.BannerAdUnit;
 import org.prebid.mobile.NativeAdUnit;
 import org.prebid.mobile.NativeDataAsset;
 import org.prebid.mobile.NativeEventTracker;
@@ -30,15 +30,11 @@ import org.prebid.mobile.NativeImageAsset;
 import org.prebid.mobile.NativeTitleAsset;
 import org.prebid.mobile.OnCompleteListener;
 import org.prebid.mobile.ResultCode;
-import org.prebid.mobile.Signals;
 import org.prebid.mobile.TargetingParams;
-import org.prebid.mobile.VideoAdUnit;
-import org.prebid.mobile.VideoBaseAdUnit;
 import org.prebid.mobile.addendum.AdViewUtils;
 import org.prebid.mobile.addendum.PbFindSizeError;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 
 import androidx.annotation.NonNull;
 
@@ -116,7 +112,33 @@ public class ADNative {
         }
     }
 
-    // MARK: - Preload + Load
+    // MARK: - Private FUNC
+    void addFirstPartyData(AdUnit adUnit) {
+        //        Access Control List
+        //        Targeting.shared.addBidderToAccessControlList(Prebid.bidderNameAppNexus)
+
+        //global user data
+        TargetingParams.addUserData("globalUserDataKey1", "globalUserDataValue1");
+
+        //global context data
+        TargetingParams.addContextData("globalContextDataKey1", "globalContextDataValue1");
+
+        //adunit context data
+        adUnit.addContextData("adunitContextDataKey1", "adunitContextDataValue1");
+
+        //global context keywords
+        TargetingParams.addContextKeyword("globalContextKeywordValue1");
+        TargetingParams.addContextKeyword("globalContextKeywordValue2");
+
+        //global user keywords
+        TargetingParams.addUserKeyword("globalUserKeywordValue1");
+        TargetingParams.addUserKeyword("globalUserKeywordValue2");
+
+        //adunit context keywords
+        adUnit.addContextKeyword("adunitContextKeywordValue1");
+        adUnit.addContextKeyword("adunitContextKeywordValue2");
+    }
+
     void deplayCallPreload() {
         this.isRecallingPreload = true;
         this.timerRecall.start();
@@ -131,44 +153,76 @@ public class ADNative {
         return null;
     }
 
+    void resetAD() {
+        if (this.adUnit == null || this.amNative == null) return;
+
+        this.isRecallingPreload = false;
+        this.isLoadNativeSucc = false;
+        this.adView.removeAllViews();
+
+        this.adUnit.stopAutoRefresh();
+        this.adUnit = null;
+
+        this.amNative.destroy();
+        this.amNative.setAdListener(null);
+        this.amNative = null;
+    }
+
+    void handerResult(ResultCode resultCode) {
+        if (resultCode == ResultCode.SUCCESS) {
+            this.amNative.loadAd(this.amRequest);
+        } else {
+            if (resultCode == ResultCode.NO_BIDS) {
+                this.deplayCallPreload();
+            } else if (resultCode == ResultCode.TIMEOUT) {
+                this.deplayCallPreload();
+            }
+        }
+    }
+
+    // MARK: - Public FUNC
     public boolean load() {
-        PBMobileAds.getInstance().log(" | isRunning: " + this.isLoaded() + " |  isRecallingPreload: " + this.isRecallingPreload);
+        PBMobileAds.getInstance().log("ADNative Placement '" + this.placement + "' - isLoaded: " + this.isLoaded() + " |  isRecallingPreload: " + this.isRecallingPreload);
         if (this.adUnitObj == null || this.isLoaded() == true || this.isRecallingPreload == true) {
             return false;
         }
-        PBMobileAds.getInstance().log("Load Native AD: " + this.placement);
+        this.resetAD();
 
         // Check Active
         if (!this.adUnitObj.isActive || this.adUnitObj.adInfor.size() <= 0) {
-            PBMobileAds.getInstance().log("Ad is not active or not exist");
+            PBMobileAds.getInstance().log("AdNative Placement '" + this.placement + "' is not active or not exist");
             return false;
         }
 
         // Check and set default
-        this.adFormatDefault = this.adUnitObj.defaultType;
+        this.adFormatDefault = this.adUnitObj.defaultFormat;
         // set adformat theo loại duy nhất có
         if (adUnitObj.adInfor.size() < 2) {
             this.adFormatDefault = this.adUnitObj.adInfor.get(0).isVideo ? ADFormat.VAST : ADFormat.HTML;
         }
 
-        // Remove Ad
-        this.destroy();
+        // Get AdInfor
+        boolean isVideo = this.adFormatDefault == ADFormat.VAST;
+        AdInfor adInfor = this.getAdInfor(isVideo);
+        if (adInfor == null) {
+            PBMobileAds.getInstance().log("AdInfor of ADNative Placement '" + this.placement + "' is not exist");
+            return false;
+        }
 
+        PBMobileAds.getInstance().log("Load ADNative Placement: " + this.placement);
         // Set GDPR
         if (PBMobileAds.getInstance().gdprConfirm) {
             TargetingParams.setSubjectToGDPR(true);
             TargetingParams.setGDPRConsentString(CMPStorageConsentManager.getConsentString(PBMobileAds.getInstance().getContextApp()));
         }
 
-        // Setup Info + Host
-        boolean isVideo = this.adFormatDefault.equals(ADFormat.VAST);
-        AdInfor adInfor = this.getAdInfor(isVideo);
-        if (adInfor == null) {
-            PBMobileAds.getInstance().log("AdInfor is not exist");
-            return false;
-        }
+        // Set FB Token
+        String fbToken = BidderTokenProvider.getBidderToken(PBMobileAds.getInstance().getContextApp());
+        TargetingParams.addUserData("fb_token", fbToken);
+
+        // Setup Host
         PBMobileAds.getInstance().setupPBS(adInfor.host);
-        PBMobileAds.getInstance().log("[Native AD] - configID: " + adInfor.configId + " | adUnitID: " + adInfor.adUnitID);
+        PBMobileAds.getInstance().log("[ADNative] - configID: " + adInfor.configId + " | adUnitID: " + adInfor.adUnitID);
 
         // Create AdUnit
         this.adUnit = new NativeAdUnit(adInfor.configId);
@@ -227,7 +281,6 @@ public class ADNative {
         this.amNative = new PublisherAdView(PBMobileAds.getInstance().getContextApp().getApplicationContext());
         this.amNative.setAdUnitId(adInfor.adUnitID);
         this.amNative.setAdSizes(AdSize.FLUID);
-        // this.amNative.setAdSizes(this.adUnitObj.adSize);
 
         // Remove + Add Ad to view
         this.adView.removeAllViews();
@@ -242,7 +295,7 @@ public class ADNative {
         this.adUnit.fetchDemand(this.amRequest, new OnCompleteListener() {
             @Override
             public void onComplete(ResultCode resultCode) {
-                PBMobileAds.getInstance().log("Prebid demand fetch placement '" + placement + "' for DFP: " + resultCode.name());
+                PBMobileAds.getInstance().log("Prebid demand fetch ADNative placement '" + placement + "' for DFP: " + resultCode.name());
                 handerResult(resultCode);
             }
         });
@@ -257,113 +310,91 @@ public class ADNative {
                         isLoadNativeSucc = true;
                         amNative.setAdSizes(new AdSize(width, height));
 
-                        PBMobileAds.getInstance().log("onAdLoaded: " + placement + " success");
+                        PBMobileAds.getInstance().log("onAdLoaded: ADNative Placement '" + placement + "'");
                         if (adDelegate == null) return;
-                        adDelegate.onAdLoaded("onAdLoaded: " + placement);
+                        adDelegate.onAdLoaded("onAdLoaded: ADNative Placement '" + placement + "'");
                     }
 
                     @Override
                     public void failure(@NonNull PbFindSizeError error) {
-                        PBMobileAds.getInstance().log("onAdLoaded: " + placement + " error - " + error.getDescription());
+                        isLoadNativeSucc = true;
+                        PBMobileAds.getInstance().log("onAdLoaded: ADNative Placement '" + placement + "' - " + error.getDescription());
                         if (adDelegate == null) return;
-                        adDelegate.onAdFailedToLoad(error.getDescription());
+                        adDelegate.onAdFailedToLoad("onAdLoaded: ADNative Placement '" + placement + "' - " + error.getDescription());
                     }
                 });
+            }
+
+            @Override
+            public void onAdOpened() {
+                super.onAdOpened();
+
+                PBMobileAds.getInstance().log("onAdOpened: ADNative Placement '" + placement + "'");
+                if (adDelegate == null) return;
+                adDelegate.onAdOpened("onAdOpened: ADNative Placement '" + placement + "'");
             }
 
             @Override
             public void onAdClosed() {
                 super.onAdClosed();
 
-                PBMobileAds.getInstance().log("onAdClosed");
+                PBMobileAds.getInstance().log("onAdClosed: ADNative Placement '" + placement + "'");
                 if (adDelegate == null) return;
-                adDelegate.onAdClosed("onAdClosed");
+                adDelegate.onAdOpened("onAdClosed: ADNative Placement '" + placement + "'");
             }
 
             @Override
-            public void onAdFailedToLoad(int errorCode) {
-                super.onAdFailedToLoad(errorCode);
+            public void onAdClicked() {
+                super.onAdClicked();
 
-                String messErr = "";
-                switch (errorCode) {
-                    case AdRequest.ERROR_CODE_INTERNAL_ERROR:
-                        messErr = "ERROR_CODE_INTERNAL_ERROR";
-                        break;
-                    case AdRequest.ERROR_CODE_INVALID_REQUEST:
-                        messErr = "ERROR_CODE_INVALID_REQUEST";
-                        break;
-                    case AdRequest.ERROR_CODE_NETWORK_ERROR:
-                        messErr = "ERROR_CODE_NETWORK_ERROR";
-                        break;
-                    case AdRequest.ERROR_CODE_NO_FILL:
-                        messErr = "ERROR_CODE_NO_FILL";
-                        break;
-                }
-
-                PBMobileAds.getInstance().log(messErr);
+                PBMobileAds.getInstance().log("onAdClicked: ADNative Placement '" + placement + "'");
                 if (adDelegate == null) return;
-                adDelegate.onAdFailedToLoad(messErr);
-            }
-
-            @Override
-            public void onAdImpression() {
-                super.onAdImpression();
-
-                PBMobileAds.getInstance().log("onAdImpression");
-                if (adDelegate == null) return;
-                adDelegate.onAdImpression("onAdImpression");
+                adDelegate.onAdOpened("onAdClicked: ADNative Placement '" + placement + "'");
             }
 
             @Override
             public void onAdLeftApplication() {
                 super.onAdLeftApplication();
 
-                PBMobileAds.getInstance().log("onAdLeftApplication");
+                PBMobileAds.getInstance().log("onAdLeftApplication: ADNative Placement '" + placement + "'");
                 if (adDelegate == null) return;
-                adDelegate.onAdLeftApplication("onAdLeftApplication");
+                adDelegate.onAdOpened("onAdLeftApplication: ADNative Placement '" + placement + "'");
+            }
+
+            @Override
+            public void onAdFailedToLoad(int errorCode) {
+                super.onAdFailedToLoad(errorCode);
+
+                String messErr = PBMobileAds.getInstance().getADError(errorCode);
+                PBMobileAds.getInstance().log("onAdFailedToLoad: ADNative Placement '" + placement + "' with error: " + messErr);
+                if (adDelegate == null) return;
+                adDelegate.onAdFailedToLoad("onAdFailedToLoad: ADNative Placement '" + placement + "' with error: " + messErr);
             }
         });
 
         return true;
     }
 
-    void handerResult(ResultCode resultCode) {
-        if (resultCode == ResultCode.SUCCESS) {
-            this.amNative.loadAd(this.amRequest);
-        } else {
-            this.isLoadNativeSucc = false;
-            this.stopAutoRefresh();
-
-            if (resultCode == ResultCode.NO_BIDS) {
-                this.deplayCallPreload();
-            } else if (resultCode == ResultCode.TIMEOUT) {
-                this.deplayCallPreload();
-            }
-        }
-    }
-
     public void destroy() {
-        if (this.isLoaded()) {
-            PBMobileAds.getInstance().log("Destroy Placement: " + this.placement);
-            this.stopAutoRefresh();
-            this.isLoadNativeSucc = false;
-            this.adView.removeAllViews();
-            this.amNative.destroy();
+        PBMobileAds.getInstance().log("Destroy ADNative Placement: " + this.placement);
 
-            if (this.timerRecall != null) {
-                this.timerRecall.cancel();
-                this.timerRecall = null;
-            }
+        this.resetAD();
+        if (this.timerRecall != null) {
+            this.timerRecall.cancel();
+            this.timerRecall = null;
         }
     }
 
-    // MARK: - Public FUNC
     public void setListener(AdDelegate adDelegate) {
         this.adDelegate = adDelegate;
     }
 
-    public AdSize getAdSize() {
-        return this.adUnitObj.adSize;
+    public int getWidth() {
+        return this.amNative.getWidth();
+    }
+
+    public int getHeight() {
+        return this.amNative.getHeight();
     }
 
     public void setAutoRefreshMillis(int timeMillis) {
@@ -373,65 +404,11 @@ public class ADNative {
         }
     }
 
-    public void stopAutoRefresh() {
-        // run stopAutoRefresh to stop .fetchDemand
-        this.adUnit.stopAutoRefresh();
-    }
-
     public boolean isLoaded() {
         return this.isLoadNativeSucc;
-//        if (this.amNative == null) return false;
-//
-//        return this.amNative.isLoading();
-    }
-
-    void addFirstPartyData(AdUnit adUnit) {
-        //        Access Control List
-        //        Targeting.shared.addBidderToAccessControlList(Prebid.bidderNameAppNexus)
-
-        //global user data
-        TargetingParams.addUserData("globalUserDataKey1", "globalUserDataValue1");
-
-        //global context data
-        TargetingParams.addContextData("globalContextDataKey1", "globalContextDataValue1");
-
-        //adunit context data
-        adUnit.addContextData("adunitContextDataKey1", "adunitContextDataValue1");
-
-        //global context keywords
-        TargetingParams.addContextKeyword("globalContextKeywordValue1");
-        TargetingParams.addContextKeyword("globalContextKeywordValue2");
-
-        //global user keywords
-        TargetingParams.addUserKeyword("globalUserKeywordValue1");
-        TargetingParams.addUserKeyword("globalUserKeywordValue2");
-
-        //adunit context keywords
-        adUnit.addContextKeyword("adunitContextKeywordValue1");
-        adUnit.addContextKeyword("adunitContextKeywordValue2");
-    }
-
-    // MARK: - Private FUNC
-    AdSize getNativeSize(BannerSize typeBanner) {
-        AdSize adSize = null;
-        switch (typeBanner) {
-            case Banner320x50:
-                adSize = new AdSize(320, 50);
-                break;
-            case Banner320x100:
-                adSize = new AdSize(320, 100);
-                break;
-            case Banner300x250:
-                adSize = new AdSize(300, 250);
-                break;
-            case Banner468x60:
-                adSize = new AdSize(468, 60);
-                break;
-            case Banner728x90:
-                adSize = new AdSize(728, 90);
-                break;
-        }
-        return adSize;
+        //        if (this.amNative == null) return false;
+        //        //
+        //        //        return this.amNative.isLoading();
     }
 
 }

@@ -23,6 +23,12 @@ public final class Constants {
     public static final double BANNER_RECALL_DEFAULT = 10000; // Sec
     public static final double INTERSTITIAL_RECALL_DEFAULT = 10000; // Sec
 
+    // ADType:
+    public static final String BANNER = "banner";
+    public static final String SMART_BANNER = "smart_banner";
+    public static final String INTERSTITIAL = "interstitial";
+    public static final String REWARED = "rewarded";
+
     // MARK: - URL Prefix
     public static final String URL_PREFIX = "https://app-services.vliplatform.com"; // "http://10.0.2.2:8000"; //
     // API

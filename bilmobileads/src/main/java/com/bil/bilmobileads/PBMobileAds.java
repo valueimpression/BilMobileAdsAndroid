@@ -1,10 +1,7 @@
 
 package com.bil.bilmobileads;
 
-import android.app.Activity;
 import android.content.Context;
-import android.content.res.Configuration;
-import android.util.DisplayMetrics;
 import android.util.Log;
 import android.webkit.WebView;
 
@@ -12,12 +9,13 @@ import com.bil.bilmobileads.entity.ADFormat;
 import com.bil.bilmobileads.entity.ADType;
 import com.bil.bilmobileads.entity.AdInfor;
 import com.bil.bilmobileads.entity.AdUnitObj;
+import com.bil.bilmobileads.entity.BannerSize;
 import com.bil.bilmobileads.entity.HostCustom;
 //import com.bil.bilmobileads.entity.TimerRecall;
 import com.bil.bilmobileads.interfaces.ResultCallback;
 //import com.bil.bilmobileads.interfaces.TimerCompleteListener;
 import com.consentmanager.sdk.CMPConsentTool;
-import com.google.android.gms.ads.AdSize;
+import com.google.android.gms.ads.AdRequest;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -96,8 +94,8 @@ public class PBMobileAds {
                     JSONObject adunitJsonObj = dataJSON.getJSONObject("adunit");
 
                     String placement = adunitJsonObj.getString("placement");
-                    String type = adunitJsonObj.getString("type");
-                    ADFormat defaultType = adunitJsonObj.getString("defaultType").equalsIgnoreCase(ADFormat.HTML.toString()) ? ADFormat.HTML : ADFormat.VAST;
+                    ADType type = getAdType(adunitJsonObj.getString("type"));
+                    ADFormat defaultFormat = adunitJsonObj.getString("defaultType").equalsIgnoreCase(ADFormat.HTML.toString()) ? ADFormat.HTML : ADFormat.VAST;
                     boolean isActive = adunitJsonObj.getBoolean("isActive");
 
                     // Create AdInfor
@@ -121,43 +119,36 @@ public class PBMobileAds {
 
                     AdUnitObj adUnitObj;
                     // Set ad size if type is banner
-                    if (type.equalsIgnoreCase(String.valueOf(ADType.Banner))) {
+                    if (type == ADType.Banner || type == ADType.SmartBanner) {
                         String width = adunitJsonObj.has("width") && !adunitJsonObj.getString("width").isEmpty() ? adunitJsonObj.getString("width") : "320";
                         String height = adunitJsonObj.has("height") && !adunitJsonObj.getString("height").isEmpty() ? adunitJsonObj.getString("height") : "50";
-                        String bannerSize = width + "x" + height;
+                        String size = width + "x" + height;
 
-                        AdSize adSize;
-                        switch (bannerSize) {
+                        BannerSize bannerSize;
+                        switch (size) {
                             case "320x50":
-                                adSize = new AdSize(320, 50);
+                                bannerSize = BannerSize.Banner320x50;
                                 break;
                             case "320x100":
-                                adSize = new AdSize(320, 100);
+                                bannerSize = BannerSize.Banner320x100;
                                 break;
                             case "300x250":
-                                adSize = new AdSize(300, 250);
+                                bannerSize = BannerSize.Banner300x250;
                                 break;
                             case "468x60":
-                                adSize = new AdSize(468, 60);
+                                bannerSize = BannerSize.Banner468x60;
                                 break;
                             case "728x90":
-                                adSize = new AdSize(728, 90);
+                                bannerSize = BannerSize.Banner728x90;
                                 break;
                             default:
-                                DisplayMetrics displayMetrics = new DisplayMetrics();
-                                ((Activity) getContextApp()).getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
-                                float heightDP = displayMetrics.heightPixels / displayMetrics.density;
-                                if (heightDP <= 720) {
-                                    adSize = new AdSize(320, 50);
-                                } else {
-                                    adSize = new AdSize(728, 90);
-                                }
+                                bannerSize = BannerSize.SmartBanner;
                                 break;
                         }
 
-                        adUnitObj = new AdUnitObj(placement, type, defaultType, isActive, adInforList, adSize);
+                        adUnitObj = new AdUnitObj(placement, type, defaultFormat, isActive, adInforList, bannerSize);
                     } else {
-                        adUnitObj = new AdUnitObj(placement, type, defaultType, isActive, adInforList);
+                        adUnitObj = new AdUnitObj(placement, type, defaultFormat, isActive, adInforList);
                     }
 
                     listAdUnitObj.add(adUnitObj);
@@ -252,6 +243,41 @@ public class PBMobileAds {
 
         private GENDER() {
         }
+    }
+
+    public String getADError(int errorCode) {
+        String messErr = "";
+        switch (errorCode) {
+            case AdRequest.ERROR_CODE_INTERNAL_ERROR:
+                messErr = "ERROR_CODE_INTERNAL_ERROR";
+                break;
+            case AdRequest.ERROR_CODE_INVALID_REQUEST:
+                messErr = "ERROR_CODE_INVALID_REQUEST";
+                break;
+            case AdRequest.ERROR_CODE_NETWORK_ERROR:
+                messErr = "ERROR_CODE_NETWORK_ERROR";
+                break;
+            case AdRequest.ERROR_CODE_NO_FILL:
+                messErr = "ERROR_CODE_NO_FILL";
+                break;
+        }
+
+        return messErr;
+    }
+
+    ADType getAdType(String type) {
+        switch (type) {
+            case "banner":
+                return ADType.Banner;
+            case "smart_banner":
+                return ADType.SmartBanner;
+            case "interstitial":
+                return ADType.Interstitial;
+            case "rewarded":
+                return ADType.Rewarded;
+        }
+
+        return null;
     }
 }
 
