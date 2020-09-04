@@ -31,7 +31,7 @@ public class MainActivity extends AppCompatActivity {
         PBMobileAds.getInstance().initialize(this, true);
 
         FrameLayout bannerView = findViewById(R.id.bannerView);
-        this.adBanner = new ADBanner(bannerView, "13b7495e-1e87-414a-afcd-ef8a9034bd22");
+        this.adBanner = new ADBanner(bannerView, "1001");
 
 //        this.adNative = new ADNative(bannerView, "1004");
 
