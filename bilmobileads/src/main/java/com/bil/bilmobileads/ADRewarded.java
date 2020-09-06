@@ -206,8 +206,11 @@ public class ADRewarded {
         PBMobileAds.getInstance().log("Preload ADRewarded Placement: " + this.placement);
         // Set GDPR
         if (PBMobileAds.getInstance().gdprConfirm) {
-            TargetingParams.setSubjectToGDPR(true);
-            TargetingParams.setGDPRConsentString(CMPStorageConsentManager.getConsentString(PBMobileAds.getInstance().getContextApp()));
+            String consentStr = CMPStorageConsentManager.getConsentString(PBMobileAds.getInstance().getContextApp());
+            if (consentStr != null && consentStr != "") {
+                TargetingParams.setSubjectToGDPR(true);
+                TargetingParams.setGDPRConsentString(CMPStorageConsentManager.getConsentString(PBMobileAds.getInstance().getContextApp()));
+            }
         }
 
         // Set FB Token
@@ -228,7 +231,7 @@ public class ADRewarded {
         rAdUnit.setParameters(parameters);
         this.adUnit = rAdUnit;
 
-        this.amRewarded = new RewardedAd(PBMobileAds.getInstance().getContextApp().getApplicationContext(), adInfor.adUnitID);
+        this.amRewarded = new RewardedAd(PBMobileAds.getInstance().getContextApp(), adInfor.adUnitID);
 
         this.isFetchingAD = true;
         final PublisherAdRequest.Builder builder = new PublisherAdRequest.Builder();

@@ -237,8 +237,11 @@ public class ADBanner {
         PBMobileAds.getInstance().log("Load ADBanner Placement: " + this.placement);
         // Set GDPR
         if (PBMobileAds.getInstance().gdprConfirm) {
-            TargetingParams.setSubjectToGDPR(true);
-            TargetingParams.setGDPRConsentString(CMPStorageConsentManager.getConsentString(PBMobileAds.getInstance().getContextApp()));
+            String consentStr = CMPStorageConsentManager.getConsentString(PBMobileAds.getInstance().getContextApp());
+            if (consentStr != null && consentStr != "") {
+                TargetingParams.setSubjectToGDPR(true);
+                TargetingParams.setGDPRConsentString(CMPStorageConsentManager.getConsentString(PBMobileAds.getInstance().getContextApp()));
+            }
         }
 
         // Set FB Token
@@ -273,7 +276,7 @@ public class ADBanner {
         }
         this.adUnit.setAutoRefreshPeriodMillis(this.timeAutoRefresh);
 
-        this.amBanner = new PublisherAdView(PBMobileAds.getInstance().getContextApp().getApplicationContext());
+        this.amBanner = new PublisherAdView(PBMobileAds.getInstance().getContextApp());
         this.amBanner.setAdUnitId(adInfor.adUnitID);
         this.amBanner.setAdSizes(this.curBannerSize);
 
@@ -300,9 +303,9 @@ public class ADBanner {
                 AdViewUtils.findPrebidCreativeSize(amBanner, new AdViewUtils.PbFindSizeListener() {
                     @Override
                     public void success(int width, int height) {
-                        isLoadBannerSucc = true;
                         amBanner.setAdSizes(curBannerSize);
 
+                        isLoadBannerSucc = true;
                         PBMobileAds.getInstance().log("onAdLoaded: ADBanner Placement '" + placement + "'");
                         if (adDelegate == null) return;
                         adDelegate.onAdLoaded("onAdLoaded: ADBanner Placement '" + placement + "'");
@@ -358,6 +361,7 @@ public class ADBanner {
             public void onAdFailedToLoad(int errorCode) {
                 super.onAdFailedToLoad(errorCode);
 
+                isLoadBannerSucc = false;
                 String messErr = PBMobileAds.getInstance().getADError(errorCode);
                 PBMobileAds.getInstance().log("onAdFailedToLoad: ADBanner Placement '" + placement + "' with error: " + messErr);
                 if (adDelegate == null) return;

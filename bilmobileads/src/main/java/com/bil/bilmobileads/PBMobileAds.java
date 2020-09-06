@@ -61,7 +61,7 @@ public class PBMobileAds {
 
         // Declare in init to the user agent could be passed in first call
         PrebidMobile.setShareGeoLocation(true);
-        PrebidMobile.setApplicationContext(context);
+        PrebidMobile.setApplicationContext(context.getApplicationContext());
         WebView obj = new WebView(context);
         obj.clearCache(true);
     }

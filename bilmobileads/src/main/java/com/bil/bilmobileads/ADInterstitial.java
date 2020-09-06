@@ -7,7 +7,6 @@ import com.consentmanager.sdk.CMPConsentTool;
 import com.consentmanager.sdk.callbacks.OnCloseCallback;
 import com.consentmanager.sdk.model.CMPConfig;
 import com.consentmanager.sdk.storage.CMPStorageConsentManager;
-import com.consentmanager.sdk.storage.CMPStorageV1;
 import com.facebook.ads.BidderTokenProvider;
 import com.google.android.gms.ads.AdListener;
 import com.google.android.gms.ads.AdRequest;
@@ -181,8 +180,11 @@ public class ADInterstitial {
         PBMobileAds.getInstance().log("Preload ADInterstitial Placement: " + this.placement);
         // Set GDPR
         if (PBMobileAds.getInstance().gdprConfirm) {
-            TargetingParams.setSubjectToGDPR(true);
-            TargetingParams.setGDPRConsentString(CMPStorageConsentManager.getConsentString(PBMobileAds.getInstance().getContextApp()));
+            String consentStr = CMPStorageConsentManager.getConsentString(PBMobileAds.getInstance().getContextApp());
+            if (consentStr != null && consentStr != "") {
+                TargetingParams.setSubjectToGDPR(true);
+                TargetingParams.setGDPRConsentString(CMPStorageConsentManager.getConsentString(PBMobileAds.getInstance().getContextApp()));
+            }
         }
 
         // Set FB Token
@@ -207,7 +209,7 @@ public class ADInterstitial {
             PBMobileAds.getInstance().log("[ADInterstitial HTML] - configId: " + adInfor.configId + " | adUnitID: " + adInfor.adUnitID);
             this.adUnit = new InterstitialAdUnit(adInfor.configId);
         }
-        this.amInterstitial = new PublisherInterstitialAd(PBMobileAds.getInstance().getContextApp().getApplicationContext());
+        this.amInterstitial = new PublisherInterstitialAd(PBMobileAds.getInstance().getContextApp());
         this.amInterstitial.setAdUnitId(adInfor.adUnitID);
 
         this.isFetchingAD = true;

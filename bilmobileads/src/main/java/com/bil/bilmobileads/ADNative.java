@@ -6,7 +6,6 @@ import android.widget.FrameLayout;
 import com.bil.bilmobileads.entity.ADFormat;
 import com.bil.bilmobileads.entity.AdInfor;
 import com.bil.bilmobileads.entity.AdUnitObj;
-import com.bil.bilmobileads.entity.BannerSize;
 import com.bil.bilmobileads.entity.TimerRecall;
 import com.bil.bilmobileads.interfaces.AdDelegate;
 import com.bil.bilmobileads.interfaces.ResultCallback;
@@ -17,7 +16,6 @@ import com.consentmanager.sdk.model.CMPConfig;
 import com.consentmanager.sdk.storage.CMPStorageConsentManager;
 import com.facebook.ads.BidderTokenProvider;
 import com.google.android.gms.ads.AdListener;
-import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdSize;
 import com.google.android.gms.ads.doubleclick.PublisherAdRequest;
 import com.google.android.gms.ads.doubleclick.PublisherAdView;
@@ -212,8 +210,11 @@ public class ADNative {
         PBMobileAds.getInstance().log("Load ADNative Placement: " + this.placement);
         // Set GDPR
         if (PBMobileAds.getInstance().gdprConfirm) {
-            TargetingParams.setSubjectToGDPR(true);
-            TargetingParams.setGDPRConsentString(CMPStorageConsentManager.getConsentString(PBMobileAds.getInstance().getContextApp()));
+            String consentStr = CMPStorageConsentManager.getConsentString(PBMobileAds.getInstance().getContextApp());
+            if (consentStr != null && consentStr != "") {
+                TargetingParams.setSubjectToGDPR(true);
+                TargetingParams.setGDPRConsentString(CMPStorageConsentManager.getConsentString(PBMobileAds.getInstance().getContextApp()));
+            }
         }
 
         // Set FB Token
@@ -278,7 +279,7 @@ public class ADNative {
         this.adUnit.addAsset(cta);
 
         // Create AdView
-        this.amNative = new PublisherAdView(PBMobileAds.getInstance().getContextApp().getApplicationContext());
+        this.amNative = new PublisherAdView(PBMobileAds.getInstance().getContextApp());
         this.amNative.setAdUnitId(adInfor.adUnitID);
         this.amNative.setAdSizes(AdSize.FLUID);
 

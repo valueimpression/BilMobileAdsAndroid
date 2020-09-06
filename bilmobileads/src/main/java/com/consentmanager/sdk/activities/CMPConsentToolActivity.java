@@ -81,9 +81,6 @@ public class CMPConsentToolActivity extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        ActionBar actionBar = getSupportActionBar();
-        actionBar.hide();
-
         cmpSettings = CMPSettings.getInstance(this);
 
         if (cmpSettings == null) {
