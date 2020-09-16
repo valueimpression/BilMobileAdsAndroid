@@ -51,15 +51,15 @@ public class ADNativeStyle {
     private boolean isRecallingPreload = false; // Check đang đợi gọi lại preload
     private TimerRecall timerRecall; // Recall load func AD
 
-    public ADNativeStyle(FrameLayout adViewFrame, String placement) {
-        if (adViewFrame == null || placement == null) {
+    public ADNativeStyle(FrameLayout adViewFrame, final String placementStr) {
+        if (adViewFrame == null || placementStr == null) {
             PBMobileAds.getInstance().log("FrameLayout and placement is not nullable");
             throw new NullPointerException();
         }
         PBMobileAds.getInstance().log("ADNativeStyle Init: " + placement);
 
         this.adViewFrame = adViewFrame;
-        this.placement = placement;
+        this.placement = placementStr;
 
         this.timerRecall = new TimerRecall(Constants.RECALL_CONFIGID_SERVER, 1000, new TimerCompleteListener() {
             @Override
@@ -76,6 +76,7 @@ public class ADNativeStyle {
                 PBMobileAds.getInstance().getADConfig(this.placement, new ResultCallback<AdUnitObj, Exception>() {
                     @Override
                     public void success(AdUnitObj data) {
+                        PBMobileAds.getInstance().log("Get Config ADNativeStyle placement: " + placementStr + " Success");
                         adUnitObj = data;
 
                         final Context contextApp = PBMobileAds.getInstance().getContextApp();
@@ -97,7 +98,7 @@ public class ADNativeStyle {
 
                     @Override
                     public void failure(Exception error) {
-                        PBMobileAds.getInstance().log(error.getLocalizedMessage());
+                        PBMobileAds.getInstance().log("Get Config ADNativeStyle placement: " + placementStr + " Fail with Error: " + error.getLocalizedMessage());
                     }
                 });
             }

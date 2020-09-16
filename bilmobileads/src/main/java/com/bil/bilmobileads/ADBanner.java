@@ -54,15 +54,15 @@ public class ADBanner {
     private boolean isRecallingPreload = false; // Check đang đợi gọi lại preload
     private TimerRecall timerRecall; // Recall load func AD
 
-    public ADBanner(FrameLayout adView, String placement) {
-        if (adView == null || placement == null) {
+    public ADBanner(FrameLayout adView, final String placementStr) {
+        if (adView == null || placementStr == null) {
             PBMobileAds.getInstance().log("FrameLayout and placement is not nullable");
             throw new NullPointerException();
         }
-        PBMobileAds.getInstance().log("AD Banner Init: " + placement);
+        PBMobileAds.getInstance().log("ADBanner Init: " + placementStr);
 
         this.adView = adView;
-        this.placement = placement;
+        this.placement = placementStr;
 
         this.timerRecall = new TimerRecall(Constants.RECALL_CONFIGID_SERVER, 1000, new TimerCompleteListener() {
             @Override
@@ -79,6 +79,7 @@ public class ADBanner {
                 PBMobileAds.getInstance().getADConfig(this.placement, new ResultCallback<AdUnitObj, Exception>() {
                     @Override
                     public void success(AdUnitObj data) {
+                        PBMobileAds.getInstance().log("Get Config ADBanner placement: " + placementStr + " Success");
                         adUnitObj = data;
 
                         final Context contextApp = PBMobileAds.getInstance().getContextApp();
@@ -100,7 +101,7 @@ public class ADBanner {
 
                     @Override
                     public void failure(Exception error) {
-                        PBMobileAds.getInstance().log(error.getLocalizedMessage());
+                        PBMobileAds.getInstance().log("Get Config ADBanner placement: " + placementStr + " Fail with Error: " + error.getLocalizedMessage());
                     }
                 });
             }

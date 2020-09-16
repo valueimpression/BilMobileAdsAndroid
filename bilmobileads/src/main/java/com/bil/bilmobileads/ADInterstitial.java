@@ -50,14 +50,14 @@ public class ADInterstitial {
     private boolean isRecallingPreload = false; // Check đang đợi gọi lại preload
     private TimerRecall timerRecall; // Recall load func AD
 
-    public ADInterstitial(String placement) {
-        if (placement == null) {
+    public ADInterstitial(final String placementStr) {
+        if (placementStr == null) {
             PBMobileAds.getInstance().log("Placement is not nullable");
             throw new NullPointerException();
         }
-        PBMobileAds.getInstance().log("AD Interstitial Init: " + placement);
+        PBMobileAds.getInstance().log("AD Interstitial Init: " + placementStr);
 
-        this.placement = placement;
+        this.placement = placementStr;
 
         this.timerRecall = new TimerRecall(Constants.RECALL_CONFIGID_SERVER, 1000, new TimerCompleteListener() {
             @Override
@@ -74,6 +74,7 @@ public class ADInterstitial {
                 PBMobileAds.getInstance().getADConfig(this.placement, new ResultCallback<AdUnitObj, Exception>() {
                     @Override
                     public void success(AdUnitObj data) {
+                        PBMobileAds.getInstance().log("Get Config ADInterstitial placement: " + placementStr + " Success");
                         adUnitObj = data;
 
                         final Context contextApp = PBMobileAds.getInstance().getContextApp();
@@ -95,7 +96,7 @@ public class ADInterstitial {
 
                     @Override
                     public void failure(Exception error) {
-                        PBMobileAds.getInstance().log(error.getLocalizedMessage());
+                        PBMobileAds.getInstance().log("Get Config ADInterstitial placement: " + placementStr + " Fail with Error: " + error.getLocalizedMessage());
                     }
                 });
             } else {
