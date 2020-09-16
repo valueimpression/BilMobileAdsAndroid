@@ -24,9 +24,13 @@
 #### Step 3: Add the dependency with latest version
 ```gradle
     dependencies {
-        implementation 'com.google.android.gms:play-services-ads:17.2.0'
-        implementation 'com.github.valueimpression:BilMobileAdsAndroid:1.1.3'
+        implementation 'com.google.android.gms:play-services-ads:18.2.0'
+        implementation 'com.github.valueimpression:BilMobileAdsAndroid:1.2.0'
     }
 ```
-
-
+## Note: Proguard 
+Add this -keep directive to your apps' proguard-rules.pro:
+```gradle
+    -keep class com.bil.** { *; }
+    -keep class com.google.android.gms.ads.** { *; }
+```
