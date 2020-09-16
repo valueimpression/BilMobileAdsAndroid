@@ -38,11 +38,11 @@ public class MainActivity extends AppCompatActivity {
 
         final FrameLayout bannerView = findViewById(R.id.bannerView);
 
-//        this.adBanner = new ADBanner(bannerView, "e1922a7c-8f6d-4258-8ab4-7c96271ffa0d");
+//        this.adBanner = new ADBanner(bannerView, "1001");
 
-//        this.adNativeStyle = new ADNativeStyle(bannerView, "b99a80a3-7a4d-4f32-bb70-0039fdb4fca3");
+//        this.adNativeStyle = new ADNativeStyle(bannerView, "1005");
 
-        this.adNativeCustom = new ADNativeCustom(bannerView, "b99a80a3-7a4d-4f32-bb70-0039fdb4fca3");
+        this.adNativeCustom = new ADNativeCustom(bannerView, "1005");
         this.adNativeCustom.setListener(new AdNativeDelegate() {
             @Override
             public void onNativeViewLoaded(ADNativeViewBuilder.Builder builder) {
@@ -80,7 +80,7 @@ public class MainActivity extends AppCompatActivity {
 
 //        this.adInterstitial = new ADInterstitial("1003");
 
-//        this.adRewarded = new ADRewarded(this, "1003");
+//        this.adRewarded = new ADRewarded(this, "1004");
 
         Button btnShowFull = (Button) findViewById(R.id.showFull);
         btnShowFull.setOnClickListener(new View.OnClickListener() {
