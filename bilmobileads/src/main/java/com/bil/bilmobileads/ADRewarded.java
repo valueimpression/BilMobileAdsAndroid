@@ -8,7 +8,6 @@ import com.consentmanager.sdk.CMPConsentTool;
 import com.consentmanager.sdk.callbacks.OnCloseCallback;
 import com.consentmanager.sdk.model.CMPConfig;
 import com.consentmanager.sdk.storage.CMPStorageConsentManager;
-import com.facebook.ads.BidderTokenProvider;
 import com.google.android.gms.ads.doubleclick.PublisherAdRequest;
 import com.google.android.gms.ads.rewarded.RewardItem;
 import com.google.android.gms.ads.rewarded.RewardedAd;
@@ -25,11 +24,7 @@ import org.prebid.mobile.AdUnit;
 import org.prebid.mobile.OnCompleteListener;
 import org.prebid.mobile.ResultCode;
 import org.prebid.mobile.RewardedVideoAdUnit;
-import org.prebid.mobile.Signals;
 import org.prebid.mobile.TargetingParams;
-import org.prebid.mobile.VideoBaseAdUnit;
-
-import java.util.Arrays;
 
 import androidx.annotation.NonNull;
 
@@ -140,25 +135,24 @@ public class ADRewarded {
             this.amRewarded.loadAd(this.amRequest, new RewardedAdLoadCallback() {
                 @Override
                 public void onRewardedAdLoaded() {
-                    PBMobileAds.getInstance().log("onRewardedAdLoaded: ADRewarded Placement '" + placement + "' Succ");
                     isFetchingAD = false;
-
-                    if (adDelegate == null) return;
-                    adDelegate.onRewardedAdLoaded("onRewardedAdLoaded: ADRewarded Placement '" + placement + "' Succ");
 
                     if (isLoadAfterPreload) {
                         isLoadAfterPreload = false;
                         if (isReady()) show();
                     }
+
+                    PBMobileAds.getInstance().log("onRewardedAdLoaded: ADRewarded Placement '" + placement + "' Succ");
+                    if (adDelegate != null) adDelegate.onRewardedAdLoaded();
                 }
 
                 @Override
                 public void onRewardedAdFailedToLoad(int errorCode) {
-                    PBMobileAds.getInstance().log("onRewardedAdFailedToLoad: ADRewarded Placement '" + placement + "' failed: "+ errorCode);
                     isFetchingAD = false;
 
-                    if (adDelegate == null) return;
-                    adDelegate.onRewardedAdFailedToLoad("onRewardedAdFailedToLoad: ADRewarded Placement '" + placement + "' failed: "+ errorCode);
+                    String messErr = PBMobileAds.getInstance().getAdRewardedError(errorCode);
+                    PBMobileAds.getInstance().log("onRewardedAdFailedToLoad: ADRewarded Placement '" + placement + "' failed: " + messErr);
+                    if (adDelegate != null) adDelegate.onRewardedAdFailedToLoad();
                     //  if (!isLoadAfterPreload) deplayCallPreload();
                 }
             });
@@ -213,24 +207,11 @@ public class ADRewarded {
             }
         }
 
-        // Set FB Token
-        String fbToken = BidderTokenProvider.getBidderToken(PBMobileAds.getInstance().getContextApp());
-        TargetingParams.addUserData("fb_token", fbToken);
-
         // Set PBS Host
         PBMobileAds.getInstance().setupPBS(adInfor.host);
         PBMobileAds.getInstance().log("[ADRewarded Video] - configId: " + adInfor.configId + " | adUnitID: " + adInfor.adUnitID);
 
-        VideoBaseAdUnit.Parameters parameters = new VideoBaseAdUnit.Parameters();
-        parameters.setMimes(Arrays.asList("video/mp4"));
-        parameters.setProtocols(Arrays.asList(Signals.Protocols.VAST_2_0));
-        parameters.setPlaybackMethod(Arrays.asList(Signals.PlaybackMethod.AutoPlaySoundOn));
-        parameters.setPlacement(Signals.Placement.InBanner);
-
-        RewardedVideoAdUnit rAdUnit = new RewardedVideoAdUnit(adInfor.configId);
-        rAdUnit.setParameters(parameters);
-        this.adUnit = rAdUnit;
-
+        this.adUnit = new RewardedVideoAdUnit(adInfor.configId);
         this.amRewarded = new RewardedAd(PBMobileAds.getInstance().getContextApp(), adInfor.adUnitID);
 
         this.isFetchingAD = true;
@@ -267,8 +248,7 @@ public class ADRewarded {
                 isFetchingAD = false;
 
                 PBMobileAds.getInstance().log("onRewardedAdOpened: ADRewarded Placement '" + placement + "'");
-                if (adDelegate == null) return;
-                adDelegate.onRewardedAdOpened("onRewardedAdOpened: ADRewarded Placement '" + placement + "'");
+                if (adDelegate != null) adDelegate.onRewardedAdOpened();
             }
 
             @Override
@@ -276,8 +256,7 @@ public class ADRewarded {
                 isFetchingAD = false;
 
                 PBMobileAds.getInstance().log("onRewardedAdClosed: ADRewarded Placement '" + placement + "'");
-                if (adDelegate == null) return;
-                adDelegate.onRewardedAdClosed("onRewardedAdClosed: ADRewarded Placement '" + placement + "'");
+                if (adDelegate != null) adDelegate.onRewardedAdClosed();
             }
 
             @Override
@@ -285,34 +264,17 @@ public class ADRewarded {
                 isFetchingAD = false;
 
                 PBMobileAds.getInstance().log("onUserEarnedReward: ADRewarded Placement '" + placement + "'");
-                if (adDelegate == null) return;
-                adDelegate.onUserEarnedReward(reward);
+                if (adDelegate != null) adDelegate.onUserEarnedReward(placement);
             }
 
             @Override
             public void onRewardedAdFailedToShow(int errorCode) {
                 super.onRewardedAdFailedToShow(errorCode);
 
-                String messErr = "";
-                switch (errorCode) {
-                    case ERROR_CODE_INTERNAL_ERROR:
-                        messErr = "ERROR_CODE_INTERNAL_ERROR";
-                        break;
-                    case ERROR_CODE_AD_REUSED:
-                        messErr = "ERROR_CODE_AD_REUSED";
-                        break;
-                    case ERROR_CODE_NOT_READY:
-                        messErr = "ERROR_CODE_NOT_READY";
-                        break;
-                    case ERROR_CODE_APP_NOT_FOREGROUND:
-                        messErr = "ERROR_CODE_APP_NOT_FOREGROUND";
-                        break;
-                }
-
                 isFetchingAD = false;
+                String messErr = PBMobileAds.getInstance().getAdRewardedError(errorCode);
                 PBMobileAds.getInstance().log("onRewardedAdFailedToShow: ADRewarded Placement '" + placement + "' with error: " + messErr);
-                if (adDelegate == null) return;
-                adDelegate.onRewardedAdFailedToShow("onRewardedAdFailedToShow: ADRewarded Placement '" + placement + "' with error: " + messErr);
+                if (adDelegate != null) adDelegate.onRewardedAdFailedToShow();
             }
         });
     }

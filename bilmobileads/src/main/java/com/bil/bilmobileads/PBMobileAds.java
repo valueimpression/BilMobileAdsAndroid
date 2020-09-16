@@ -2,6 +2,7 @@
 package com.bil.bilmobileads;
 
 import android.content.Context;
+import android.content.res.Resources;
 import android.util.Log;
 import android.webkit.WebView;
 
@@ -16,6 +17,7 @@ import com.bil.bilmobileads.interfaces.ResultCallback;
 //import com.bil.bilmobileads.interfaces.TimerCompleteListener;
 import com.consentmanager.sdk.CMPConsentTool;
 import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.rewarded.RewardedAdCallback;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -62,8 +64,16 @@ public class PBMobileAds {
         // Declare in init to the user agent could be passed in first call
         PrebidMobile.setShareGeoLocation(true);
         PrebidMobile.setApplicationContext(context.getApplicationContext());
-        WebView obj = new WebView(context);
-        obj.clearCache(true);
+        WebView webView;
+        try {
+            webView = new WebView(context);
+            webView.clearCache(true);
+        } catch (Resources.NotFoundException e) {
+            // Some older devices can crash when instantiating a WebView, due to a Resources$NotFoundException
+            // Creating with the application Context fixes this, but is not generally recommended for view creation
+            webView = new WebView(context.getApplicationContext());
+            webView.clearCache(true);
+        }
     }
 
     public Context getContextApp() {
@@ -259,6 +269,26 @@ public class PBMobileAds {
                 break;
             case AdRequest.ERROR_CODE_NO_FILL:
                 messErr = "ERROR_CODE_NO_FILL";
+                break;
+        }
+
+        return messErr;
+    }
+
+    public String getAdRewardedError(int errorCode) {
+        String messErr = "";
+        switch (errorCode) {
+            case RewardedAdCallback.ERROR_CODE_INTERNAL_ERROR:
+                messErr = "ERROR_CODE_INTERNAL_ERROR";
+                break;
+            case RewardedAdCallback.ERROR_CODE_AD_REUSED:
+                messErr = "ERROR_CODE_AD_REUSED";
+                break;
+            case RewardedAdCallback.ERROR_CODE_NOT_READY:
+                messErr = "ERROR_CODE_NOT_READY";
+                break;
+            case RewardedAdCallback.ERROR_CODE_APP_NOT_FOREGROUND:
+                messErr = "ERROR_CODE_APP_NOT_FOREGROUND";
                 break;
         }
 

@@ -19,12 +19,12 @@ public class TimerRecall extends CountDownTimer {
         this.listener = timerCompleteListener;
     }
 
-    @Override
+
     public void onTick(long l) {
 //        PBMobileAds.getInstance().log("onTick: " + l / 1000);
     }
 
-    @Override
+
     public void onFinish() {
         if (this.listener != null) {
             this.listener.doWork();
