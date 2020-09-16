@@ -28,5 +28,9 @@
         implementation 'com.github.valueimpression:BilMobileAdsAndroid:1.2.0'
     }
 ```
-
-
+# Note: Proguard 
+Add this -keep directive to your apps' proguard-rules.pro:
+```gradle
+    -keep class com.bil.** { *; }
+    -keep class com.google.android.gms.ads.** { *; }
+```
