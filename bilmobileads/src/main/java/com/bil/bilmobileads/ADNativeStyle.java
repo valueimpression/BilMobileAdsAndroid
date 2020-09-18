@@ -263,8 +263,8 @@ public class ADNativeStyle {
             }
 
             @Override
-            public void onAdClicked() {
-                super.onAdClicked();
+            public void onAdLeftApplication() {
+                super.onAdLeftApplication();
 
                 PBMobileAds.getInstance().log("onAdClicked: ADNativeStyle Placement '" + placement + "'");
                 if (adDelegate != null) adDelegate.onAdClicked();

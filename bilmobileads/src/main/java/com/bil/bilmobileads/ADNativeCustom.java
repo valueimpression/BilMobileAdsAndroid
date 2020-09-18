@@ -295,10 +295,10 @@ public class ADNativeCustom {
                     }
 
                     @Override
-                    public void onAdClicked() {
-                        super.onAdClicked();
+                    public void onAdLeftApplication() {
+                        super.onAdLeftApplication();
 
-                        PBMobileAds.getInstance().log("onAdClicked: ADNativeCustom Placement '" + placement + "'");
+                        PBMobileAds.getInstance().log("onAdClicked: ADNativeStyle Placement '" + placement + "'");
                         if (adNativeDelegate != null) adNativeDelegate.onAdClicked();
                     }
 
