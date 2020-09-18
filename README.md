@@ -25,7 +25,7 @@
 ```gradle
     dependencies {
         implementation 'com.google.android.gms:play-services-ads:18.2.0'
-        implementation 'com.github.valueimpression:BilMobileAdsAndroid:1.2.0'
+        implementation 'com.github.valueimpression:BilMobileAdsAndroid:1.2.1'
     }
 ```
 ## Note: Proguard 
