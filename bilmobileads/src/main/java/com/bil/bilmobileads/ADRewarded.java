@@ -46,7 +46,7 @@ public class ADRewarded {
     private ADFormat adFormatDefault;
     private boolean isLoadAfterPreload = false; // Check user gọi load() chưa có AD -> preload và show AD luôn
     private boolean isFetchingAD = false; // Check có phải đang lấy AD ko
-    private boolean isRecallingPreload = false; // Check đang đợi gọi lại preload
+    private boolean isRecallingPreload = false; // Check đang đợi gọi lại preLoad
     private TimerRecall timerRecall; // Recall load func AD
 
     public ADRewarded(Activity activity, final String placementStr) {
@@ -159,10 +159,10 @@ public class ADRewarded {
             });
         } else {
             if (resultCode == ResultCode.NO_BIDS) {
-                // Ko gọi lại preload nếu user gọi load() đầu tiên
+                // Ko gọi lại preLoad nếu user gọi load() đầu tiên
                 if (!this.isLoadAfterPreload) this.deplayCallPreload();
             } else if (resultCode == ResultCode.TIMEOUT) {
-                // Ko gọi lại preload nếu user gọi load() đầu tiên
+                // Ko gọi lại preLoad nếu user gọi load() đầu tiên
                 if (!this.isLoadAfterPreload) this.deplayCallPreload();
             }
 
