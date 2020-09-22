@@ -43,7 +43,7 @@ public class ADNativeCustom {
     private NativeAdUnit adUnit;
     private AdLoader amNativeDFP;
     private UnifiedNativeAd unifiedNativeAdObj;
-    private ADNativeViewBuilder.Builder builder;
+    private ADNativeView.Builder builder;
 
     // MARK: - AD Info
     private String placement;
@@ -274,7 +274,7 @@ public class ADNativeCustom {
                             builder.destroy();
                             builder = null;
                         }
-                        builder = new ADNativeViewBuilder.Builder(unifiedNativeAd);
+                        builder = new ADNativeView.Builder(unifiedNativeAd);
 
                         // Add NativeAD to View
                         adViewFrame.removeAllViews();

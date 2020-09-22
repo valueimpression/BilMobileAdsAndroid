@@ -8,7 +8,6 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.RatingBar;
 import android.widget.TextView;
 
@@ -16,11 +15,13 @@ import com.bil.bilmobileads.ADBanner;
 import com.bil.bilmobileads.ADInterstitial;
 import com.bil.bilmobileads.ADNativeCustom;
 import com.bil.bilmobileads.ADNativeStyle;
-import com.bil.bilmobileads.ADNativeViewBuilder;
+import com.bil.bilmobileads.ADNativeView;
 import com.bil.bilmobileads.ADRewarded;
 import com.bil.bilmobileads.PBMobileAds;
+import com.bil.bilmobileads.interfaces.AdDelegate;
 import com.bil.bilmobileads.interfaces.AdNativeDelegate;
 import com.bil.bilmobileads.interfaces.AdNativeVideoDelegate;
+import com.bil.bilmobileads.interfaces.AdRewardedDelegate;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -40,12 +41,12 @@ public class MainActivity extends AppCompatActivity {
 
 //        this.adBanner = new ADBanner(bannerView, "1001");
 
-//        this.adNativeStyle = new ADNativeStyle(bannerView, "1005");
+//        this.adNativeStyle = new ADNativeStyle(bannerView, "1004");
 
-        this.adNativeCustom = new ADNativeCustom(bannerView, "1005");
+        this.adNativeCustom = new ADNativeCustom(bannerView, "1004");
         this.adNativeCustom.setListener(new AdNativeDelegate() {
             @Override
-            public void onNativeViewLoaded(ADNativeViewBuilder.Builder builder) {
+            public void onNativeViewLoaded(ADNativeView.Builder builder) {
                 super.onNativeViewLoaded(builder);
 
                 // Get View and setup content NativeAD
@@ -70,17 +71,11 @@ public class MainActivity extends AppCompatActivity {
                     }
                 });
             }
-
-            @Override
-            public void onAdLoaded() {
-                super.onAdLoaded();
-
-            }
         });
 
-//        this.adInterstitial = new ADInterstitial("1003");
+//        this.adInterstitial = new ADInterstitial("1002");
 
-//        this.adRewarded = new ADRewarded(this, "1004");
+//        this.adRewarded = new ADRewarded(this, "1003");
 
         Button btnShowFull = (Button) findViewById(R.id.showFull);
         btnShowFull.setOnClickListener(new View.OnClickListener() {

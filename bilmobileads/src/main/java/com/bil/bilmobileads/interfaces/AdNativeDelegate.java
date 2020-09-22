@@ -1,13 +1,13 @@
 package com.bil.bilmobileads.interfaces;
 
-import com.bil.bilmobileads.ADNativeViewBuilder;
+import com.bil.bilmobileads.ADNativeView;
 
 public class AdNativeDelegate {
 
     /*
      * Called when an ad native custom view loaded. (ADNativeCustom Only)
      * */
-    public void onNativeViewLoaded(ADNativeViewBuilder.Builder builder) {
+    public void onNativeViewLoaded(ADNativeView.Builder builder) {
     }
 
     /*

@@ -13,11 +13,11 @@ import com.google.android.gms.ads.formats.MediaView;
 import com.google.android.gms.ads.formats.UnifiedNativeAd;
 import com.google.android.gms.ads.formats.UnifiedNativeAdView;
 
-public final class ADNativeViewBuilder {
+public final class ADNativeView {
 
     private UnifiedNativeAd unifiedNativeAd;
 
-    ADNativeViewBuilder(UnifiedNativeAd unifiedNativeAd) {
+    ADNativeView(UnifiedNativeAd unifiedNativeAd) {
         this.unifiedNativeAd = unifiedNativeAd;
     }
 
@@ -31,14 +31,14 @@ public final class ADNativeViewBuilder {
             this.nativeAdView = new UnifiedNativeAdView(PBMobileAds.getInstance().getContextApp());
         }
 
-        public ADNativeViewBuilder.Builder setNativeView(View view) {
+        public ADNativeView.Builder setNativeView(View view) {
             this.nativeAdView.removeAllViews();
             this.nativeAdView.addView(view);
 
             return this;
         }
 
-        public ADNativeViewBuilder.Builder setMediaView(FrameLayout frameLayout) {
+        public ADNativeView.Builder setMediaView(FrameLayout frameLayout) {
             MediaView mediaView = new MediaView(PBMobileAds.getInstance().getContextApp());
             mediaView.setMediaContent(this.nativeAd.getMediaContent());
 
@@ -49,7 +49,7 @@ public final class ADNativeViewBuilder {
             return this;
         }
 
-        public ADNativeViewBuilder.Builder setHeadlineView(TextView headLine) {
+        public ADNativeView.Builder setHeadlineView(TextView headLine) {
             if (this.nativeAd.getHeadline() == null) {
                 headLine.setVisibility(View.INVISIBLE);
             } else {
@@ -59,7 +59,7 @@ public final class ADNativeViewBuilder {
             return this;
         }
 
-        public ADNativeViewBuilder.Builder setBodyView(TextView txtBody) {
+        public ADNativeView.Builder setBodyView(TextView txtBody) {
             if (this.nativeAd.getBody() == null) {
                 txtBody.setVisibility(View.INVISIBLE);
             } else {
@@ -69,7 +69,7 @@ public final class ADNativeViewBuilder {
             return this;
         }
 
-        public ADNativeViewBuilder.Builder setCallToActionView(Button btnAction) {
+        public ADNativeView.Builder setCallToActionView(Button btnAction) {
             if (this.nativeAd.getCallToAction() == null) {
                 btnAction.setVisibility(View.INVISIBLE);
             } else {
@@ -79,7 +79,7 @@ public final class ADNativeViewBuilder {
             return this;
         }
 
-        public ADNativeViewBuilder.Builder setIconView(ImageView imgIcon) {
+        public ADNativeView.Builder setIconView(ImageView imgIcon) {
             if (this.nativeAd.getIcon() == null) {
                 imgIcon.setVisibility(View.GONE);
             } else {
@@ -89,7 +89,7 @@ public final class ADNativeViewBuilder {
             return this;
         }
 
-        public ADNativeViewBuilder.Builder setPriceView(TextView txtprice) {
+        public ADNativeView.Builder setPriceView(TextView txtprice) {
             if (this.nativeAd.getPrice() == null) {
                 txtprice.setVisibility(View.INVISIBLE);
             } else {
@@ -99,7 +99,7 @@ public final class ADNativeViewBuilder {
             return this;
         }
 
-        public ADNativeViewBuilder.Builder setStarRatingView(RatingBar rateBar) {
+        public ADNativeView.Builder setStarRatingView(RatingBar rateBar) {
             if (this.nativeAd.getStarRating() == null) {
                 rateBar.setVisibility(View.INVISIBLE);
             } else {
@@ -109,7 +109,7 @@ public final class ADNativeViewBuilder {
             return this;
         }
 
-        public ADNativeViewBuilder.Builder setStoreView(TextView txtStore) {
+        public ADNativeView.Builder setStoreView(TextView txtStore) {
             if (this.nativeAd.getStore() == null) {
                 txtStore.setVisibility(View.INVISIBLE);
             } else {
@@ -119,7 +119,7 @@ public final class ADNativeViewBuilder {
             return this;
         }
 
-        public ADNativeViewBuilder.Builder setAdvertiserView(TextView txtAdvertiser) {
+        public ADNativeView.Builder setAdvertiserView(TextView txtAdvertiser) {
             if (this.nativeAd.getAdvertiser() == null) {
                 txtAdvertiser.setVisibility(View.INVISIBLE);
             } else {
@@ -129,7 +129,7 @@ public final class ADNativeViewBuilder {
             return this;
         }
 
-        public ADNativeViewBuilder.Builder setVideoListener(final AdNativeVideoDelegate videoDelegate) {
+        public ADNativeView.Builder setVideoListener(final AdNativeVideoDelegate videoDelegate) {
             VideoController vc = this.nativeAd.getVideoController();
 
             // Updates the UI to say whether or not this ad has a video asset.
