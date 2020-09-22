@@ -276,12 +276,12 @@ public class ADNativeCustom {
                         }
                         builder = new ADNativeViewBuilder.Builder(unifiedNativeAd);
 
-                        if (adNativeDelegate != null)
-                            adNativeDelegate.onNativeViewLoaded(builder);
-
                         // Add NativeAD to View
                         adViewFrame.removeAllViews();
                         adViewFrame.addView(builder.getNativeView());
+
+                        if (adNativeDelegate != null)
+                            adNativeDelegate.onNativeViewLoaded(builder);
                     }
                 })
                 .withAdListener(new AdListener() {
