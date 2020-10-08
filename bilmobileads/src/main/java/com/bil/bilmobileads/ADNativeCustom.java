@@ -35,35 +35,34 @@ import java.util.ArrayList;
 public class ADNativeCustom {
 
     // MARK: - View
-    private FrameLayout adViewFrame;
     private AdNativeDelegate adNativeDelegate;
 
     // MARK: - AD
     private PublisherAdRequest amRequest;
     private NativeAdUnit adUnit;
     private AdLoader amNativeDFP;
-    private UnifiedNativeAd unifiedNativeAdObj;
-    private ADNativeView.Builder builder;
+    //    private UnifiedNativeAd unifiedNativeAdObj;
+    //    private ADNativeView.Builder builder;
 
     // MARK: - AD Info
     private String placement;
     private AdUnitObj adUnitObj;
 
     // MARK: - Properties
+    public static final int MAX_ADS = 5;
+    private int curNumOfAds = 0;
     private ADFormat adFormatDefault;
-    private int timeAutoRefresh = Constants.BANNER_AUTO_REFRESH_DEFAULT;
-    private boolean isLoadNativeSucc = false; // true => Native đang chạy
-    private boolean isRecallingPreload = false; // Check đang đợi gọi lại preload
-    private TimerRecall timerRecall; // Recall load func AD
+    private boolean isRecallingPreload = false;
+    private boolean isFetchingAD = false;
+    private TimerRecall timerRecall;
 
-    public ADNativeCustom(FrameLayout adViewFrame, final String placementStr) {
-        if (adViewFrame == null || placementStr == null) {
-            PBMobileAds.getInstance().log("FrameLayout and placement is not nullable");
+    public ADNativeCustom(final String placementStr) {
+        if (placementStr == null) {
+            PBMobileAds.getInstance().log("Placement is not nullable");
             throw new NullPointerException();
         }
         PBMobileAds.getInstance().log("AD Native Init: " + placementStr);
 
-        this.adViewFrame = adViewFrame;
         this.placement = placementStr;
 
         this.timerRecall = new TimerRecall(Constants.RECALL_CONFIGID_SERVER, 1000, new TimerCompleteListener() {
@@ -111,7 +110,7 @@ public class ADNativeCustom {
     }
 
     // MARK: - Private FUNC
-    void deplayCallPreload() {
+    void delayCallPreload() {
         this.isRecallingPreload = true;
         this.timerRecall.start();
     }
@@ -128,9 +127,8 @@ public class ADNativeCustom {
     void resetAD() {
         if (this.adUnit == null || this.amNativeDFP == null) return;
 
+        this.isFetchingAD = false;
         this.isRecallingPreload = false;
-        this.isLoadNativeSucc = false;
-        this.adViewFrame.removeAllViews();
 
         this.adUnit.stopAutoRefresh();
         this.adUnit = null;
@@ -187,26 +185,33 @@ public class ADNativeCustom {
         this.adUnit.addAsset(cta);
     }
 
-    void handerResult(ResultCode resultCode) {
+    void handlerResult(ResultCode resultCode) {
         if (resultCode == ResultCode.SUCCESS) {
             this.amNativeDFP.loadAd(this.amRequest);
         } else {
+            this.isFetchingAD = false;
+
             if (resultCode == ResultCode.NO_BIDS) {
-                this.deplayCallPreload();
+                this.delayCallPreload();
             } else if (resultCode == ResultCode.TIMEOUT) {
-                this.deplayCallPreload();
+                this.delayCallPreload();
             }
         }
     }
 
     // MARK: - Public FUNC
     public boolean load() {
-        PBMobileAds.getInstance().log("ADNativeCustom Placement '" + this.placement + "' - isLoaded: " + this.isLoaded() + " |  isRecallingPreload: " + this.isRecallingPreload);
-        if (this.adUnitObj == null || this.isLoaded() == true || this.isRecallingPreload == true) {
+        PBMobileAds.getInstance().log("ADNativeCustom Placement '" + this.placement + "' - isFetchingAD: " + this.isFetchingAD + " | isRecallingPreload: " + this.isRecallingPreload);
+        if (this.adUnitObj == null || this.isFetchingAD || this.isRecallingPreload) {
             return false;
         }
-        this.resetAD();
 
+        if (this.curNumOfAds == MAX_ADS) {
+            PBMobileAds.getInstance().log("ADNativeCustom Placement '" + this.placement + "' current store " + this.curNumOfAds + " ads. (Store max " + MAX_ADS + " ads)");
+            return false;
+        }
+
+        this.resetAD();
         // Check Active
         if (!this.adUnitObj.isActive || this.adUnitObj.adInfor.size() <= 0) {
             PBMobileAds.getInstance().log("ADNativeCustom Placement '" + this.placement + "' is not active or not exist");
@@ -247,7 +252,6 @@ public class ADNativeCustom {
         this.adUnit.setContextType(NativeAdUnit.CONTEXT_TYPE.SOCIAL_CENTRIC);
         this.adUnit.setPlacementType(NativeAdUnit.PLACEMENTTYPE.CONTENT_FEED);
         this.adUnit.setContextSubType(NativeAdUnit.CONTEXTSUBTYPE.GENERAL_SOCIAL);
-        this.adUnit.setAutoRefreshPeriodMillis(this.timeAutoRefresh);
 
         setupNativeAsset();
 
@@ -262,36 +266,43 @@ public class ADNativeCustom {
                 .forUnifiedNativeAd(new UnifiedNativeAd.OnUnifiedNativeAdLoadedListener() {
                     @Override
                     public void onUnifiedNativeAdLoaded(UnifiedNativeAd unifiedNativeAd) {
+                        isFetchingAD = false;
+
+                        curNumOfAds++;
+
                         PBMobileAds.getInstance().log("onNativeAdViewLoaded: ADNativeCustom Placement '" + placement + "'");
 
-                        // You must call destroy on old ads when you are done with them,
-                        // otherwise you will have a memory leak.
-                        if (unifiedNativeAdObj != null) unifiedNativeAdObj.destroy();
-                        unifiedNativeAdObj = unifiedNativeAd;
+                        // You must call destroy on old ads when you are done with them, otherwise you will have a memory leak.
+                        //  if (unifiedNativeAdObj != null) unifiedNativeAdObj.destroy();
+                        //  unifiedNativeAdObj = unifiedNativeAd;
 
                         // Create AdNativeViewBuider
-                        if (builder != null) {
-                            builder.destroy();
-                            builder = null;
-                        }
-                        builder = new ADNativeView.Builder(unifiedNativeAd);
+                        // if (builder != null) {
+                        //     builder.destroy();
+                        //     builder = null;
+                        // }
+                        ADNativeView.Builder builder = new ADNativeView.Builder(unifiedNativeAd);
 
-                        // Add NativeAD to View
-                        adViewFrame.removeAllViews();
-                        adViewFrame.addView(builder.getNativeView());
-
-                        if (adNativeDelegate != null)
-                            adNativeDelegate.onNativeViewLoaded(builder);
+                        if (adNativeDelegate != null) adNativeDelegate.onNativeViewLoaded(builder);
                     }
                 })
                 .withAdListener(new AdListener() {
                     @Override
                     public void onAdLoaded() {
                         super.onAdLoaded();
+                        isFetchingAD = false;
 
-                        isLoadNativeSucc = true;
                         PBMobileAds.getInstance().log("onAdLoaded: ADNativeCustom Placement '" + placement + "'");
                         if (adNativeDelegate != null) adNativeDelegate.onAdLoaded();
+                    }
+
+                    @Override
+                    public void onAdImpression() {
+                        super.onAdImpression();
+                        curNumOfAds--;
+
+                        PBMobileAds.getInstance().log("onAdImpression: ADNativeCustom Placement '" + placement + "'");
+                        if (adNativeDelegate != null) adNativeDelegate.onAdImpression();
                     }
 
                     @Override
@@ -305,6 +316,7 @@ public class ADNativeCustom {
                     @Override
                     public void onAdFailedToLoad(int errorCode) {
                         super.onAdFailedToLoad(errorCode);
+                        isFetchingAD = false;
 
                         String messErr = PBMobileAds.getInstance().getADError(errorCode);
                         PBMobileAds.getInstance().log("onAdFailedToLoad: ADNativeCustom Placement '" + placement + "' with error: " + messErr);
@@ -320,11 +332,13 @@ public class ADNativeCustom {
             builder.addTestDevice(Constants.DEVICE_ID_TEST);
         }
         this.amRequest = builder.build();
+
+        this.isFetchingAD = true;
         this.adUnit.fetchDemand(this.amRequest, new OnCompleteListener() {
             @Override
             public void onComplete(ResultCode resultCode) {
                 PBMobileAds.getInstance().log("Prebid demand fetch ADNativeCustom placement '" + placement + "' for DFP: " + resultCode.name());
-                handerResult(resultCode);
+                handlerResult(resultCode);
             }
         });
 
@@ -336,10 +350,10 @@ public class ADNativeCustom {
 
         this.resetAD();
 
-        if (unifiedNativeAdObj != null) {
-            unifiedNativeAdObj.destroy();
-            unifiedNativeAdObj = null;
-        }
+        //  if (unifiedNativeAdObj != null) {
+        //      unifiedNativeAdObj.destroy();
+        //      unifiedNativeAdObj = null;
+        //  }
 
         if (this.timerRecall != null) {
             this.timerRecall.cancel();
@@ -351,16 +365,8 @@ public class ADNativeCustom {
         this.adNativeDelegate = adNativeDelegate;
     }
 
-    public void setAutoRefreshMillis(int timeMillis) {
-        this.timeAutoRefresh = timeMillis;
-        if (this.adUnit != null) {
-            this.adUnit.setAutoRefreshPeriodMillis(timeMillis);
-        }
+    public int numOfAds() {
+        return this.curNumOfAds;
     }
-
-    public boolean isLoaded() {
-        return this.isLoadNativeSucc;
-    }
-
 }
 

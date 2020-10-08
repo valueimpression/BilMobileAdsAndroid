@@ -47,9 +47,9 @@ public class ADNativeStyle {
     // MARK: - Properties
     private ADFormat adFormatDefault;
     private int timeAutoRefresh = Constants.BANNER_AUTO_REFRESH_DEFAULT;
-    private boolean isLoadNativeSucc = false; // true => Native đang chạy
-    private boolean isRecallingPreload = false; // Check đang đợi gọi lại preload
-    private TimerRecall timerRecall; // Recall load func AD
+    private boolean isLoadNativeSucc = false;
+    private boolean isRecallingPreload = false;
+    private TimerRecall timerRecall;
 
     public ADNativeStyle(FrameLayout adViewFrame, final String placementStr) {
         if (adViewFrame == null || placementStr == null) {
@@ -106,7 +106,7 @@ public class ADNativeStyle {
     }
 
     // MARK: - Private FUNC
-    void deplayCallPreload() {
+    void delayCallPreload() {
         this.isRecallingPreload = true;
         this.timerRecall.start();
     }
@@ -135,14 +135,14 @@ public class ADNativeStyle {
         this.amNative = null;
     }
 
-    void handerResult(ResultCode resultCode) {
+    void handlerResult(ResultCode resultCode) {
         if (resultCode == ResultCode.SUCCESS) {
             this.amNative.loadAd(this.amRequest);
         } else {
             if (resultCode == ResultCode.NO_BIDS) {
-                this.deplayCallPreload();
+                this.delayCallPreload();
             } else if (resultCode == ResultCode.TIMEOUT) {
-                this.deplayCallPreload();
+                this.delayCallPreload();
             }
         }
     }
@@ -199,7 +199,7 @@ public class ADNativeStyle {
     // MARK: - Public FUNC
     public boolean load() {
         PBMobileAds.getInstance().log("ADNativeStyle Placement '" + this.placement + "' - isLoaded: " + this.isLoaded() + " |  isRecallingPreload: " + this.isRecallingPreload);
-        if (this.adUnitObj == null || this.isLoaded() == true || this.isRecallingPreload == true) {
+        if (this.adUnitObj == null || this.isLoaded() || this.isRecallingPreload) {
             return false;
         }
         this.resetAD();
@@ -294,7 +294,7 @@ public class ADNativeStyle {
             @Override
             public void onComplete(ResultCode resultCode) {
                 PBMobileAds.getInstance().log("Prebid demand fetch ADNativeStyle placement '" + placement + "' for DFP: " + resultCode.name());
-                handerResult(resultCode);
+                handlerResult(resultCode);
             }
         });
 

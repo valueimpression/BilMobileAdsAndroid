@@ -45,10 +45,10 @@ public class ADInterstitial {
 
     // MARK: Properties
     private ADFormat adFormatDefault;
-    private boolean isLoadAfterPreload = false; // Check user gọi load() chưa có AD -> preload và show AD luôn
-    private boolean isFetchingAD = false; // Check có phải đang lấy AD ko
-    private boolean isRecallingPreload = false; // Check đang đợi gọi lại preload
-    private TimerRecall timerRecall; // Recall load func AD
+    private boolean isLoadAfterPreload = false;
+    private boolean isFetchingAD = false;
+    private boolean isRecallingPreload = false;
+    private TimerRecall timerRecall;
 
     public ADInterstitial(final String placementStr) {
         if (placementStr == null) {
@@ -106,7 +106,7 @@ public class ADInterstitial {
     }
 
     // MARK: - Private FUNC
-    void deplayCallPreload() {
+    void delayCallPreload() {
         this.isRecallingPreload = true;
         this.timerRecall.start();
     }
@@ -132,16 +132,16 @@ public class ADInterstitial {
         this.amInterstitial = null;
     }
 
-    void handerResult(ResultCode resultCode) {
+    void handlerResult(ResultCode resultCode) {
         if (resultCode == ResultCode.SUCCESS) {
             this.amInterstitial.loadAd(this.amRequest);
         } else {
             if (resultCode == ResultCode.NO_BIDS) {
                 // Ko gọi lại preload nếu user gọi load() đầu tiên
-                if (!this.isLoadAfterPreload) this.deplayCallPreload();
+                if (!this.isLoadAfterPreload) this.delayCallPreload();
             } else if (resultCode == ResultCode.TIMEOUT) {
                 // Ko gọi lại preload nếu user gọi load() đầu tiên
-                if (!this.isLoadAfterPreload) this.deplayCallPreload();
+                if (!this.isLoadAfterPreload) this.delayCallPreload();
             }
 
             this.isFetchingAD = false;
@@ -151,7 +151,7 @@ public class ADInterstitial {
     // MARK: - Public FUNC
     public boolean preLoad() {
         PBMobileAds.getInstance().log("ADInterstitial Placement '" + this.placement + "' - isReady: " + this.isReady() + " |  isFetchingAD: " + this.isFetchingAD + " |  isRecallingPreload: " + this.isRecallingPreload);
-        if (this.adUnitObj == null || this.isReady() == true || this.isFetchingAD == true || this.isRecallingPreload == true) {
+        if (this.adUnitObj == null || this.isReady() || this.isFetchingAD || this.isRecallingPreload) {
             return false;
         }
         this.resetAD();
@@ -208,7 +208,7 @@ public class ADInterstitial {
             @Override
             public void onComplete(ResultCode resultCode) {
                 PBMobileAds.getInstance().log("Prebid demand fetch ADInterstitial placement '" + placement + "' for DFP: " + resultCode.name());
-                handerResult(resultCode);
+                handlerResult(resultCode);
             }
         });
 
@@ -270,7 +270,7 @@ public class ADInterstitial {
                 String messErr = PBMobileAds.getInstance().getADError(errorCode);
                 if (errorCode == AdRequest.ERROR_CODE_NO_FILL) {
                     adFormatDefault = adFormatDefault.equals(ADFormat.VAST) ? ADFormat.HTML : ADFormat.VAST;
-                    if (!isLoadAfterPreload) deplayCallPreload();
+                    if (!isLoadAfterPreload) delayCallPreload();
                 }
 
                 isFetchingAD = false;

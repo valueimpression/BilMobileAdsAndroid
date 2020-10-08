@@ -50,9 +50,9 @@ public class ADBanner {
     private AdSize curBannerSize;
     private ADFormat adFormatDefault;
     private int timeAutoRefresh = Constants.BANNER_AUTO_REFRESH_DEFAULT;
-    private boolean isLoadBannerSucc = false; // true => banner đang chạy
-    private boolean isRecallingPreload = false; // Check đang đợi gọi lại preload
-    private TimerRecall timerRecall; // Recall load func AD
+    private boolean isLoadBannerSucc = false;
+    private boolean isRecallingPreload = false;
+    private TimerRecall timerRecall;
 
     public ADBanner(FrameLayout adView, final String placementStr) {
         if (adView == null || placementStr == null) {
@@ -133,7 +133,7 @@ public class ADBanner {
         return adSize;
     }
 
-    void deplayCallPreload() {
+    void delayCallPreload() {
         this.isRecallingPreload = true;
         this.timerRecall.start();
     }
@@ -162,14 +162,14 @@ public class ADBanner {
         this.amBanner = null;
     }
 
-    void handerResult(ResultCode resultCode) {
+    void handlerResult(ResultCode resultCode) {
         if (resultCode == ResultCode.SUCCESS) {
             this.amBanner.loadAd(this.amRequest);
         } else {
             if (resultCode == ResultCode.NO_BIDS) {
-                this.deplayCallPreload();
+                this.delayCallPreload();
             } else if (resultCode == ResultCode.TIMEOUT) {
-                this.deplayCallPreload();
+                this.delayCallPreload();
             }
         }
     }
@@ -177,7 +177,7 @@ public class ADBanner {
     // MARK: - Public FUNC
     public boolean load() {
         PBMobileAds.getInstance().log("ADBanner Placement '" + this.placement + "' - isLoaded: " + this.isLoaded() + " |  isRecallingPreload: " + this.isRecallingPreload);
-        if (this.adUnitObj == null || this.isLoaded() == true || this.isRecallingPreload == true) {
+        if (this.adUnitObj == null || this.isLoaded() || this.isRecallingPreload) {
             return false;
         }
         this.resetAD();
@@ -248,7 +248,7 @@ public class ADBanner {
             @Override
             public void onComplete(ResultCode resultCode) {
                 PBMobileAds.getInstance().log("Prebid demand fetch ADBanner placement '" + placement + "' for DFP: " + resultCode.name());
-                handerResult(resultCode);
+                handlerResult(resultCode);
             }
         });
 

@@ -11,7 +11,13 @@ public class AdNativeDelegate {
     }
 
     /*
-     * Called when an ad native request loaded an ad.
+     * Called when an ad native to Impression
+     * */
+    public void onAdImpression() {
+    }
+
+    /*
+     * Called when an ad native request loaded an ad and wait to Impression
      * */
     public void onAdLoaded() {
     }

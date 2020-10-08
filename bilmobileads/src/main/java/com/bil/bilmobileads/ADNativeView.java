@@ -1,5 +1,7 @@
 package com.bil.bilmobileads;
 
+import android.graphics.Color;
+import android.graphics.Typeface;
 import android.view.View;
 import android.widget.Button;
 import android.widget.FrameLayout;
@@ -32,9 +34,16 @@ public final class ADNativeView {
         }
 
         public ADNativeView.Builder setNativeView(View view) {
-            this.nativeAdView.removeAllViews();
-            this.nativeAdView.addView(view);
+            TextView txtAd = new TextView(view.getContext());
+            txtAd.setText("Ad");
+            txtAd.setTextColor(Color.WHITE);
+            txtAd.setPadding(0,0,5,0);
+            txtAd.setTypeface(Typeface.defaultFromStyle(Typeface.BOLD));
+            txtAd.setBackgroundColor(Color.parseColor("#FFCD68"));
+            txtAd.setLayoutParams(new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT));
 
+            this.nativeAdView.addView(view);
+            this.nativeAdView.addView(txtAd);
             return this;
         }
 
@@ -184,9 +193,10 @@ public final class ADNativeView {
             return this.nativeAdView;
         }
 
-        public void destroy() {
+        private void destroy() {
             if (this.nativeAd != null) {
                 this.nativeAd.destroy();
+                this.nativeAd = null;
             }
             if (this.nativeAdView != null) {
                 this.nativeAdView.removeAllViews();

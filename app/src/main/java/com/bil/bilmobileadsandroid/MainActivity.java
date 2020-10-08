@@ -23,6 +23,8 @@ import com.bil.bilmobileads.interfaces.AdNativeDelegate;
 import com.bil.bilmobileads.interfaces.AdNativeVideoDelegate;
 import com.bil.bilmobileads.interfaces.AdRewardedDelegate;
 
+import java.util.ArrayList;
+
 public class MainActivity extends AppCompatActivity {
 
     ADBanner adBanner;
@@ -30,6 +32,8 @@ public class MainActivity extends AppCompatActivity {
     ADNativeCustom adNativeCustom;
     ADInterstitial adInterstitial;
     ADRewarded adRewarded;
+
+    ArrayList<ADNativeView.Builder> builderArrayList = new ArrayList<>();
 
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -41,13 +45,55 @@ public class MainActivity extends AppCompatActivity {
 
 //        this.adBanner = new ADBanner(bannerView, "1001");
 
+//        this.adInterstitial = new ADInterstitial("1002");
+
+//        this.adRewarded = new ADRewarded(this, "1003");
+
 //        this.adNativeStyle = new ADNativeStyle(bannerView, "1004");
 
-        this.adNativeCustom = new ADNativeCustom(bannerView, "1004");
+        this.adNativeCustom = new ADNativeCustom("1004");
         this.adNativeCustom.setListener(new AdNativeDelegate() {
             @Override
             public void onNativeViewLoaded(ADNativeView.Builder builder) {
                 super.onNativeViewLoaded(builder);
+
+                // Preload native ads (Max 5 request)
+                builderArrayList.add(builder);
+                PBMobileAds.getInstance().log("Total current Ads stored: " + adNativeCustom.numOfAds());
+                // Preload 2 native ads
+                if (adNativeCustom.numOfAds() < 2) {
+                    adNativeCustom.load();
+                }
+            }
+        });
+
+        Button btnLoadFull = (Button) findViewById(R.id.loadFull);
+        btnLoadFull.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                adNativeCustom.load();
+            }
+        });
+
+        Button btnShowFull = (Button) findViewById(R.id.showFull);
+        btnShowFull.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (adInterstitial != null) {
+                    adInterstitial.load();
+                }
+
+                if (adRewarded != null) {
+                    adRewarded.load();
+                }
+
+                if (builderArrayList.size() <= 0) {
+                    PBMobileAds.getInstance().log("Native unavailable, load ad before show");
+                    return;
+                }
+
+                ADNativeView.Builder builder = builderArrayList.get(builderArrayList.size() - 1);
+                builderArrayList.remove(builder);
 
                 // Get View and setup content NativeAD
                 View nativeView = LayoutInflater.from(getApplicationContext()).inflate(R.layout.native_ad_view, null);
@@ -66,28 +112,12 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onVideoEnd() {
                         super.onVideoEnd();
-
                         PBMobileAds.getInstance().log("onVideoEnd");
                     }
                 });
-            }
-        });
 
-//        this.adInterstitial = new ADInterstitial("1002");
-
-//        this.adRewarded = new ADRewarded(this, "1003");
-
-        Button btnShowFull = (Button) findViewById(R.id.showFull);
-        btnShowFull.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if (adInterstitial != null) {
-                    adInterstitial.load();
-                }
-
-                if (adRewarded != null) {
-                    adRewarded.load();
-                }
+                bannerView.removeAllViews();
+                bannerView.addView(builder.getNativeView());
             }
         });
 

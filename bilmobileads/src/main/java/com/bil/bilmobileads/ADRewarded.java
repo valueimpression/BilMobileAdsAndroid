@@ -44,10 +44,10 @@ public class ADRewarded {
 
     // MARK: Properties
     private ADFormat adFormatDefault;
-    private boolean isLoadAfterPreload = false; // Check user gọi load() chưa có AD -> preload và show AD luôn
-    private boolean isFetchingAD = false; // Check có phải đang lấy AD ko
-    private boolean isRecallingPreload = false; // Check đang đợi gọi lại preLoad
-    private TimerRecall timerRecall; // Recall load func AD
+    private boolean isLoadAfterPreload = false;
+    private boolean isFetchingAD = false;
+    private boolean isRecallingPreload = false;
+    private TimerRecall timerRecall;
 
     public ADRewarded(Activity activity, final String placementStr) {
         if (activity == null || placementStr == null) {
@@ -106,7 +106,7 @@ public class ADRewarded {
     }
 
     // MARK: - Private FUNC
-    void deplayCallPreload() {
+    void delayCallPreload() {
         this.isRecallingPreload = true;
         this.timerRecall.start();
     }
@@ -131,7 +131,7 @@ public class ADRewarded {
         this.amRewarded = null;
     }
 
-    void handerResult(ResultCode resultCode) {
+    void handlerResult(ResultCode resultCode) {
         if (resultCode == ResultCode.SUCCESS) {
             this.amRewarded.loadAd(this.amRequest, new RewardedAdLoadCallback() {
                 @Override
@@ -154,16 +154,16 @@ public class ADRewarded {
                     String messErr = PBMobileAds.getInstance().getAdRewardedError(errorCode);
                     PBMobileAds.getInstance().log("onRewardedAdFailedToLoad: ADRewarded Placement '" + placement + "' failed: " + messErr);
                     if (adDelegate != null) adDelegate.onRewardedAdFailedToLoad();
-                    //  if (!isLoadAfterPreload) deplayCallPreload();
+                    //  if (!isLoadAfterPreload) delayCallPreload();
                 }
             });
         } else {
             if (resultCode == ResultCode.NO_BIDS) {
                 // Ko gọi lại preLoad nếu user gọi load() đầu tiên
-                if (!this.isLoadAfterPreload) this.deplayCallPreload();
+                if (!this.isLoadAfterPreload) this.delayCallPreload();
             } else if (resultCode == ResultCode.TIMEOUT) {
                 // Ko gọi lại preLoad nếu user gọi load() đầu tiên
-                if (!this.isLoadAfterPreload) this.deplayCallPreload();
+                if (!this.isLoadAfterPreload) this.delayCallPreload();
             }
 
             this.isFetchingAD = false;
@@ -173,7 +173,7 @@ public class ADRewarded {
     // MARK: - Public FUNC
     public boolean preLoad() {
         PBMobileAds.getInstance().log("ADRewarded Placement '" + this.placement + "' - isReady: " + this.isReady() + " |  isFetchingAD: " + this.isFetchingAD + " |  isRecallingPreload: " + this.isRecallingPreload);
-        if (this.adUnitObj == null || this.isReady() == true || this.isFetchingAD == true || this.isRecallingPreload == true) {
+        if (this.adUnitObj == null || this.isReady() || this.isFetchingAD || this.isRecallingPreload) {
             return false;
         }
         this.resetAD();
@@ -225,7 +225,7 @@ public class ADRewarded {
             @Override
             public void onComplete(ResultCode resultCode) {
                 PBMobileAds.getInstance().log("Prebid demand fetch ADRewarded placement '" + placement + "' for DFP: " + resultCode.name());
-                handerResult(resultCode);
+                handlerResult(resultCode);
             }
         });
 
