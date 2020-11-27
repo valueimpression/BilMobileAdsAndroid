@@ -1,7 +1,10 @@
 package com.bil.bilmobileads;
 
+import android.app.Activity;
+import android.app.Application;
 import android.content.Context;
-import android.widget.FrameLayout;
+import android.os.Bundle;
+import android.view.ViewGroup;
 
 import com.bil.bilmobileads.interfaces.ResultCallback;
 import com.consentmanager.sdk.CMPConsentTool;
@@ -9,6 +12,7 @@ import com.consentmanager.sdk.callbacks.OnCloseCallback;
 import com.consentmanager.sdk.model.CMPConfig;
 import com.consentmanager.sdk.storage.CMPStorageConsentManager;
 import com.google.android.gms.ads.AdListener;
+import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdSize;
 import com.google.android.gms.ads.doubleclick.PublisherAdRequest;
 import com.google.android.gms.ads.doubleclick.PublisherAdView;
@@ -17,25 +21,23 @@ import com.bil.bilmobileads.entity.ADFormat;
 import com.bil.bilmobileads.entity.AdInfor;
 import com.bil.bilmobileads.entity.AdUnitObj;
 import com.bil.bilmobileads.entity.BannerSize;
-import com.bil.bilmobileads.entity.TimerRecall;
 import com.bil.bilmobileads.interfaces.AdDelegate;
-import com.bil.bilmobileads.interfaces.TimerCompleteListener;
 
 import org.prebid.mobile.AdUnit;
 import org.prebid.mobile.BannerAdUnit;
 import org.prebid.mobile.OnCompleteListener;
 import org.prebid.mobile.ResultCode;
-import org.prebid.mobile.TargetingParams;
 import org.prebid.mobile.VideoAdUnit;
 import org.prebid.mobile.addendum.AdViewUtils;
 import org.prebid.mobile.addendum.PbFindSizeError;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
-public class ADBanner {
+public class ADBanner implements Application.ActivityLifecycleCallbacks {
 
     // MARK: - View
-    private FrameLayout adView;
+    private ViewGroup adView;
     private AdDelegate adDelegate;
 
     // MARK: - AD
@@ -49,12 +51,12 @@ public class ADBanner {
     // MARK: - Properties
     private AdSize curBannerSize;
     private ADFormat adFormatDefault;
-    private int timeAutoRefresh = Constants.BANNER_AUTO_REFRESH_DEFAULT;
-    private boolean isLoadBannerSucc = false;
-    private boolean isRecallingPreload = false;
-    private TimerRecall timerRecall;
 
-    public ADBanner(FrameLayout adView, final String placementStr) {
+    private boolean isLoadBannerSucc = false;
+    private boolean setDefaultBidType = true;
+    private boolean isFetchingAD = false;
+
+    public ADBanner(ViewGroup adView, final String placementStr) {
         if (adView == null || placementStr == null) {
             PBMobileAds.getInstance().log("FrameLayout and placement is not nullable");
             throw new NullPointerException();
@@ -64,95 +66,51 @@ public class ADBanner {
         this.adView = adView;
         this.placement = placementStr;
 
-        this.timerRecall = new TimerRecall(Constants.RECALL_CONFIGID_SERVER, 1000, new TimerCompleteListener() {
-            @Override
-            public void doWork() {
-                isRecallingPreload = false;
-                load();
-            }
-        });
+        // Setup Application Delegate
+        ((Activity) PBMobileAds.getInstance().getContextApp()).getApplication().registerActivityLifecycleCallbacks(this);
 
         // Get AdUnit
+        this.adUnitObj = PBMobileAds.getInstance().getAdUnitObj(this.placement);
         if (this.adUnitObj == null) {
-            this.adUnitObj = PBMobileAds.getInstance().getAdUnitObj(this.placement);
-            if (this.adUnitObj == null) {
-                PBMobileAds.getInstance().getADConfig(this.placement, new ResultCallback<AdUnitObj, Exception>() {
-                    @Override
-                    public void success(AdUnitObj data) {
-                        PBMobileAds.getInstance().log("Get Config ADBanner placement: " + placementStr + " Success");
-                        adUnitObj = data;
+            PBMobileAds.getInstance().getADConfig(this.placement, new ResultCallback<AdUnitObj, Exception>() {
+                @Override
+                public void success(AdUnitObj data) {
+                    PBMobileAds.getInstance().log("Get Config ADBanner placement: " + placementStr + " Success");
+                    adUnitObj = data;
 
-                        final Context contextApp = PBMobileAds.getInstance().getContextApp();
-                        if (PBMobileAds.getInstance().gdprConfirm && CMPConsentTool.needShowCMP(contextApp)) {
-                            String appName = contextApp.getApplicationInfo().loadLabel(contextApp.getPackageManager()).toString();
+                    final Context contextApp = PBMobileAds.getInstance().getContextApp();
+                    if (PBMobileAds.getInstance().gdprConfirm && CMPConsentTool.needShowCMP(contextApp)) {
+                        String appName = contextApp.getApplicationInfo().loadLabel(contextApp.getPackageManager()).toString();
 
-                            CMPConfig cmpConfig = CMPConfig.createInstance(15029, "consentmanager.mgr.consensu.org", appName, "EN");
-                            CMPConsentTool.createInstance(contextApp, cmpConfig, new OnCloseCallback() {
-                                @Override
-                                public void onWebViewClosed() {
-                                    PBMobileAds.getInstance().log("ConsentString: " + CMPStorageConsentManager.getConsentString(contextApp));
-                                    load();
-                                }
-                            });
-                        } else {
-                            load();
-                        }
+                        CMPConfig cmpConfig = CMPConfig.createInstance(15029, "consentmanager.mgr.consensu.org", appName, "EN");
+                        CMPConsentTool.createInstance(contextApp, cmpConfig, new OnCloseCallback() {
+                            @Override
+                            public void onWebViewClosed() {
+                                PBMobileAds.getInstance().log("ConsentString: " + CMPStorageConsentManager.getConsentString(contextApp));
+                                load();
+                            }
+                        });
+                    } else {
+                        load();
                     }
+                }
 
-                    @Override
-                    public void failure(Exception error) {
-                        PBMobileAds.getInstance().log("Get Config ADBanner placement: " + placementStr + " Fail with Error: " + error.getLocalizedMessage());
-                    }
-                });
-            }
+                @Override
+                public void failure(Exception error) {
+                    PBMobileAds.getInstance().log("Get Config ADBanner placement: " + placementStr + " Fail with Error: " + error.getLocalizedMessage());
+                }
+            });
+        } else {
+            this.load();
         }
     }
 
-    // MARK: - Private FUNC
-    AdSize getBannerSize(BannerSize typeBanner) {
-        AdSize adSize = null;
-        switch (typeBanner) {
-            case Banner320x50:
-                adSize = new AdSize(320, 50);
-                break;
-            case Banner320x100:
-                adSize = new AdSize(320, 100);
-                break;
-            case Banner300x250:
-                adSize = new AdSize(300, 250);
-                break;
-            case Banner468x60:
-                adSize = new AdSize(468, 60);
-                break;
-            case Banner728x90:
-                adSize = new AdSize(728, 90);
-                break;
-            case SmartBanner:
-                adSize = AdSize.SMART_BANNER;
-        }
-        return adSize;
-    }
-
-    void delayCallPreload() {
-        this.isRecallingPreload = true;
-        this.timerRecall.start();
-    }
-
-    AdInfor getAdInfor(boolean isVideo) {
-        for (AdInfor infor : this.adUnitObj.adInfor) {
-            if (infor.isVideo == isVideo) {
-                return infor;
-            }
-        }
-        return null;
-    }
-
+    // MARK: - Load AD
     void resetAD() {
         if (this.adUnit == null || this.amBanner == null) return;
 
-        this.isRecallingPreload = false;
+        this.isFetchingAD = false;
         this.isLoadBannerSucc = false;
-        this.adView.removeAllViews();
 
         this.adUnit.stopAutoRefresh();
         this.adUnit = null;
@@ -166,51 +124,46 @@ public class ADBanner {
         if (resultCode == ResultCode.SUCCESS) {
             this.amBanner.loadAd(this.amRequest);
         } else {
+            this.isFetchingAD = false;
+            this.isLoadBannerSucc = false;
+
             if (resultCode == ResultCode.NO_BIDS) {
-                this.delayCallPreload();
+                this.processNoBids();
             } else if (resultCode == ResultCode.TIMEOUT) {
-                this.delayCallPreload();
+                PBMobileAds.getInstance().log("ADBanner Placement '" + this.placement + "' Timeout. Please check your internet connect.");
             }
         }
     }
 
-    // MARK: - Public FUNC
     public boolean load() {
-        PBMobileAds.getInstance().log("ADBanner Placement '" + this.placement + "' - isLoaded: " + this.isLoaded() + " |  isRecallingPreload: " + this.isRecallingPreload);
-        if (this.adUnitObj == null || this.isLoaded() || this.isRecallingPreload) {
+        PBMobileAds.getInstance().log("ADBanner Placement '" + this.placement + "' - isLoaded: " + this.isLoaded() + " | isFetchingAD: " + this.isFetchingAD);
+        if (this.adUnitObj == null || this.isLoaded() || this.isFetchingAD) {
             return false;
         }
         this.resetAD();
 
         // Check Active
         if (!this.adUnitObj.isActive || this.adUnitObj.adInfor.size() <= 0) {
-            PBMobileAds.getInstance().log("ADBanner Placement '" + this.placement + "' is not active or not exist");
+            PBMobileAds.getInstance().log("ADBanner Placement '" + this.placement + "' is not active or not exist.");
             return false;
         }
 
-        // Check and set default
+        // Check and Set Default
         this.adFormatDefault = this.adUnitObj.defaultFormat;
-        // set adformat theo loại duy nhất có
-        if (adUnitObj.adInfor.size() < 2) {
-            this.adFormatDefault = this.adUnitObj.adInfor.get(0).isVideo ? ADFormat.VAST : ADFormat.HTML;
+        if (!this.setDefaultBidType && this.adUnitObj.adInfor.size() >= 2) {
+            this.adFormatDefault = this.adFormatDefault == ADFormat.VAST ? ADFormat.HTML : ADFormat.VAST;
+            this.setDefaultBidType = true;
         }
+
+        // Set GDPR
+        PBMobileAds.getInstance().setGDPR();
 
         // Get AdInfor
         boolean isVideo = this.adFormatDefault == ADFormat.VAST;
-        AdInfor adInfor = this.getAdInfor(isVideo);
+        AdInfor adInfor = PBMobileAds.getInstance().getAdInfor(isVideo, this.adUnitObj);
         if (adInfor == null) {
-            PBMobileAds.getInstance().log("AdInfor of ADBanner Placement '" + this.placement + "' is not exist");
+            PBMobileAds.getInstance().log("AdInfor of ADBanner Placement '" + this.placement + "' is not exist.");
             return false;
-        }
-
-        PBMobileAds.getInstance().log("Load ADBanner Placement: " + this.placement);
-        // Set GDPR
-        if (PBMobileAds.getInstance().gdprConfirm) {
-            String consentStr = CMPStorageConsentManager.getConsentString(PBMobileAds.getInstance().getContextApp());
-            if (consentStr != null && consentStr != "") {
-                TargetingParams.setSubjectToGDPR(true);
-                TargetingParams.setGDPRConsentString(CMPStorageConsentManager.getConsentString(PBMobileAds.getInstance().getContextApp()));
-            }
         }
 
         // Set AD Size
@@ -222,6 +175,7 @@ public class ADBanner {
             h = 1;
         }
 
+        PBMobileAds.getInstance().log("Load ADBanner Placement: " + this.placement);
         PBMobileAds.getInstance().setupPBS(adInfor.host);
         if (isVideo) {
             PBMobileAds.getInstance().log("[ADBanner Video] - configID: " + adInfor.configId + " | adUnitID: " + adInfor.adUnitID);
@@ -230,45 +184,30 @@ public class ADBanner {
             PBMobileAds.getInstance().log("[ADBanner HTML] - configID: " + adInfor.configId + " | adUnitID: " + adInfor.adUnitID);
             this.adUnit = new BannerAdUnit(adInfor.configId, w, h);
         }
-        this.adUnit.setAutoRefreshPeriodMillis(this.timeAutoRefresh);
+
+        // Set auto refresh time | refreshTime is -> sec
+        this.setAutoRefreshMillis();
 
         this.amBanner = new PublisherAdView(PBMobileAds.getInstance().getContextApp());
         this.amBanner.setAdUnitId(adInfor.adUnitID);
         this.amBanner.setAdSizes(this.curBannerSize);
-
-        this.adView.removeAllViews();
-        this.adView.addView(this.amBanner);
-
-        final PublisherAdRequest.Builder builder = new PublisherAdRequest.Builder();
-        if (PBMobileAds.getInstance().isTestMode) {
-            builder.addTestDevice(Constants.DEVICE_ID_TEST);
-        }
-        this.amRequest = builder.build();
-        this.adUnit.fetchDemand(this.amRequest, new OnCompleteListener() {
-            @Override
-            public void onComplete(ResultCode resultCode) {
-                PBMobileAds.getInstance().log("Prebid demand fetch ADBanner placement '" + placement + "' for DFP: " + resultCode.name());
-                handlerResult(resultCode);
-            }
-        });
-
         this.amBanner.setAdListener(new AdListener() {
             @Override
             public void onAdLoaded() {
                 super.onAdLoaded();
+
+                isFetchingAD = false;
+                isLoadBannerSucc = true;
                 AdViewUtils.findPrebidCreativeSize(amBanner, new AdViewUtils.PbFindSizeListener() {
                     @Override
                     public void success(int width, int height) {
                         amBanner.setAdSizes(curBannerSize);
-
-                        isLoadBannerSucc = true;
                         PBMobileAds.getInstance().log("onAdLoaded: ADBanner Placement '" + placement + "'");
                         if (adDelegate != null) adDelegate.onAdLoaded();
                     }
 
                     @Override
                     public void failure(@NonNull PbFindSizeError error) {
-                        isLoadBannerSucc = true;
                         PBMobileAds.getInstance().log("onAdLoaded: ADBanner Placement '" + placement + "' - " + error.getDescription());
                         if (adDelegate != null) adDelegate.onAdLoaded();
                     }
@@ -310,11 +249,39 @@ public class ADBanner {
             @Override
             public void onAdFailedToLoad(int errorCode) {
                 super.onAdFailedToLoad(errorCode);
-
                 isLoadBannerSucc = false;
-                String messErr = PBMobileAds.getInstance().getADError(errorCode);
-                PBMobileAds.getInstance().log("onAdFailedToLoad: ADBanner Placement '" + placement + "' with error: " + messErr);
-                if (adDelegate != null) adDelegate.onAdFailedToLoad(messErr);
+
+                if (errorCode == AdRequest.ERROR_CODE_NO_FILL) {
+                    if (!processNoBids()) {
+                        isFetchingAD = false;
+                        if (adDelegate != null)
+                            adDelegate.onAdFailedToLoad("onAdFailedToLoad: ADBanner Placement '" + placement + "' with error: " + PBMobileAds.getInstance().getADError(errorCode));
+                    }
+                } else {
+                    isFetchingAD = false;
+                    String messErr = "onAdFailedToLoad: ADBanner Placement '" + placement + "' with error: " + PBMobileAds.getInstance().getADError(errorCode);
+                    PBMobileAds.getInstance().log(messErr);
+                    if (adDelegate != null) adDelegate.onAdFailedToLoad(messErr);
+                }
+            }
+        });
+
+        // Add AD to view
+        this.adView.removeAllViews();
+        this.adView.addView(this.amBanner);
+
+        // Create Request PBS
+        this.isFetchingAD = true;
+        final PublisherAdRequest.Builder builder = new PublisherAdRequest.Builder();
+        if (PBMobileAds.getInstance().isTestMode) {
+            builder.addTestDevice(Constants.DEVICE_ID_TEST);
+        }
+        this.amRequest = builder.build();
+        this.adUnit.fetchDemand(this.amRequest, new OnCompleteListener() {
+            @Override
+            public void onComplete(ResultCode resultCode) {
+                PBMobileAds.getInstance().log("Prebid demand fetch ADBanner placement '" + placement + "' for DFP: " + resultCode.name());
+                handlerResult(resultCode);
             }
         });
 
@@ -323,40 +290,122 @@ public class ADBanner {
 
     public void destroy() {
         PBMobileAds.getInstance().log("Destroy ADBanner Placement: " + this.placement);
-
         this.resetAD();
-        if (this.timerRecall != null) {
-            this.timerRecall.cancel();
-            this.timerRecall = null;
-        }
+        ((Activity) PBMobileAds.getInstance().getContextApp()).getApplication().unregisterActivityLifecycleCallbacks(this);
     }
 
+    // MARK: - Public FUNC
     public void setListener(AdDelegate adDelegate) {
         this.adDelegate = adDelegate;
     }
 
-    private void setAdSize(BannerSize size) {
-        this.curBannerSize = this.getBannerSize(size);
-    }
-
     public int getWidth() {
+        if (this.adUnit == null) return 0;
         return this.curBannerSize.getWidth();
     }
 
     public int getHeight() {
+        if (this.adUnit == null) return 0;
         return this.curBannerSize.getHeight();
     }
 
-    public void setAutoRefreshMillis(int timeMillis) {
-        this.timeAutoRefresh = timeMillis;
-        if (this.adUnit != null) {
-            this.adUnit.setAutoRefreshPeriodMillis(timeMillis);
-        }
+    public int getWidthInPixels() {
+        if (this.adUnit == null) return 0;
+        return this.curBannerSize.getWidthInPixels(PBMobileAds.getInstance().getContextApp());
+    }
+
+    public int getHeightInPixels() {
+        if (this.adUnit == null) return 0;
+        return this.curBannerSize.getHeightInPixels(PBMobileAds.getInstance().getContextApp());
     }
 
     public boolean isLoaded() {
         return this.isLoadBannerSucc;
     }
 
+    // MARK: - Private FUNC
+    void setAdSize(BannerSize size) {
+        this.curBannerSize = this.getBannerSize(size);
+    }
+
+    AdSize getBannerSize(BannerSize typeBanner) {
+        AdSize adSize = null;
+        switch (typeBanner) {
+            case Banner320x50:
+                adSize = new AdSize(320, 50);
+                break;
+            case Banner320x100:
+                adSize = new AdSize(320, 100);
+                break;
+            case Banner300x250:
+                adSize = new AdSize(300, 250);
+                break;
+            case Banner468x60:
+                adSize = new AdSize(468, 60);
+                break;
+            case Banner728x90:
+                adSize = new AdSize(728, 90);
+                break;
+            case SmartBanner:
+                adSize = AdSize.SMART_BANNER;
+        }
+        return adSize;
+    }
+
+    void setAutoRefreshMillis() {
+        if (this.adUnitObj.refreshTime > 0) {
+            this.adUnit.setAutoRefreshPeriodMillis(this.adUnitObj.refreshTime * 1000); // convert sec to milisec
+        }
+    }
+
+    boolean processNoBids() {
+        if (this.adUnitObj.adInfor.size() >= 2 && this.adFormatDefault == this.adUnitObj.defaultFormat) {
+            this.setDefaultBidType = false;
+            this.load();
+
+            return true;
+        } else {
+            // Both or .video, .html is no bids -> wait and preload.
+            PBMobileAds.getInstance().log("ADBanner Placement '" + this.placement + "' No Bids.");
+            return false;
+        }
+    }
+
+    //  MARK: - Application Delegate
+    @Override
+    public void onActivityResumed(@NonNull Activity activity) {
+        if (this.adUnit == null) return;
+
+        this.setAutoRefreshMillis();
+        PBMobileAds.getInstance().log("onForeground: ADBanner Placement '" + this.placement + "'");
+    }
+
+    @Override
+    public void onActivityStopped(@NonNull Activity activity) {
+        if (this.adUnit == null) return;
+
+        this.adUnit.setAutoRefreshPeriodMillis(60000 * 1000);
+        PBMobileAds.getInstance().log("onBackground: ADBanner Placement '" + this.placement + "'");
+    }
+
+    @Override
+    public void onActivityCreated(@NonNull Activity activity, @Nullable Bundle bundle) {
+    }
+
+    @Override
+    public void onActivityStarted(@NonNull Activity activity) {
+    }
+
+    @Override
+    public void onActivityPaused(@NonNull Activity activity) {
+    }
+
+    @Override
+    public void onActivitySaveInstanceState(@NonNull Activity activity, @NonNull Bundle bundle) {
+    }
+
+    @Override
+    public void onActivityDestroyed(@NonNull Activity activity) {
+    }
 }
 

@@ -1,5 +1,7 @@
 package com.bil.bilmobileads.interfaces;
 
+import com.bil.bilmobileads.entity.ADRewardItem;
+
 public class AdRewardedDelegate {
 
     public void onRewardedAdLoaded() {
@@ -11,12 +13,12 @@ public class AdRewardedDelegate {
     public void onRewardedAdClosed() {
     }
 
-    public void onUserEarnedReward(String data) {
+    public void onUserEarnedReward(ADRewardItem rewardItem) {
     }
 
-    public void onRewardedAdFailedToLoad() {
+    public void onRewardedAdFailedToLoad(String error) {
     }
 
-    public void onRewardedAdFailedToShow() {
+    public void onRewardedAdFailedToShow(String error) {
     }
 }

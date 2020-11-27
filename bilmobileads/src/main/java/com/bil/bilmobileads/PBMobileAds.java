@@ -15,7 +15,7 @@ import com.bil.bilmobileads.entity.HostCustom;
 //import com.bil.bilmobileads.entity.TimerRecall;
 import com.bil.bilmobileads.interfaces.ResultCallback;
 //import com.bil.bilmobileads.interfaces.TimerCompleteListener;
-import com.consentmanager.sdk.CMPConsentTool;
+import com.consentmanager.sdk.storage.CMPStorageConsentManager;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.rewarded.RewardedAdCallback;
 
@@ -37,11 +37,6 @@ public class PBMobileAds {
 
     // MARK: List Config
     ArrayList<AdUnitObj> listAdUnitObj = new ArrayList<AdUnitObj>();
-
-    // MARK: List AD
-    ArrayList<ADBanner> listADBanner = new ArrayList<ADBanner>();
-    ArrayList<ADInterstitial> listADIntersititial = new ArrayList<ADInterstitial>();
-    ArrayList<ADRewarded> listADRewarded = new ArrayList<ADRewarded>();
 
     // MARK: api
     boolean isTestMode = false;
@@ -76,10 +71,6 @@ public class PBMobileAds {
         }
     }
 
-    public Context getContextApp() {
-        return this.contextApp;
-    }
-
     // MARK: - Call API AD
     void getADConfig(final String adUnit, final ResultCallback resultAD) {
         this.log("Start Request Config adUnit: " + adUnit);
@@ -105,8 +96,8 @@ public class PBMobileAds {
 
                     String placement = adunitJsonObj.getString("placement");
                     ADType type = getAdType(adunitJsonObj.getString("type"));
-                    ADFormat defaultFormat = adunitJsonObj.getString("defaultType").equalsIgnoreCase(ADFormat.HTML.toString()) ? ADFormat.HTML : ADFormat.VAST;
                     boolean isActive = adunitJsonObj.getBoolean("isActive");
+                    int refreshTime = adunitJsonObj.getInt("refreshTime");
 
                     // Create AdInfor
                     ArrayList<AdInfor> adInforList = new ArrayList<AdInfor>();
@@ -125,6 +116,13 @@ public class PBMobileAds {
 
                         AdInfor adInfor = new AdInfor(isVideo, hostCustom, configId, adUnitID);
                         adInforList.add(adInfor);
+                    }
+
+                    // Validate defaultType Bid type
+                    ADFormat defaultFormat = adunitJsonObj.getString("defaultType").equalsIgnoreCase(ADFormat.HTML.toString()) ? ADFormat.HTML : ADFormat.VAST;
+                    if (adInforList.size() < 2)  {
+                        ADFormat bidType = adInforList.get(0).isVideo ? ADFormat.VAST : ADFormat.HTML;
+                        defaultFormat = defaultFormat == bidType ? defaultFormat : bidType;
                     }
 
                     AdUnitObj adUnitObj;
@@ -155,12 +153,10 @@ public class PBMobileAds {
                                 bannerSize = BannerSize.SmartBanner;
                                 break;
                         }
-
-                        adUnitObj = new AdUnitObj(placement, type, defaultFormat, isActive, adInforList, bannerSize);
+                        adUnitObj = new AdUnitObj(placement, type, defaultFormat, isActive, adInforList, bannerSize, refreshTime);
                     } else {
-                        adUnitObj = new AdUnitObj(placement, type, defaultFormat, isActive, adInforList);
+                        adUnitObj = new AdUnitObj(placement, type, defaultFormat, isActive, adInforList, refreshTime);
                     }
-
                     listAdUnitObj.add(adUnitObj);
 
                     // Return result
@@ -185,13 +181,6 @@ public class PBMobileAds {
         httpApi.execute();
     }
 
-    // MARK: - Call CMP / GDPR
-    private void initGDPR() {
-        Context contextApp = this.getContextApp();
-        String appName = contextApp.getApplicationInfo().loadLabel(contextApp.getPackageManager()).toString();
-        CMPConsentTool.createInstance(contextApp, 14327, "consentmanager.mgr.consensu.org", appName, "");
-    }
-
     // MARK: - Get Data Config
     AdUnitObj getAdUnitObj(String placement) {
         for (AdUnitObj config : this.listAdUnitObj) {
@@ -202,8 +191,17 @@ public class PBMobileAds {
         return null;
     }
 
+    AdInfor getAdInfor(boolean isVideo, AdUnitObj adUnitObj) {
+        for (AdInfor infor : adUnitObj.adInfor) {
+            if (infor.isVideo == isVideo) {
+                return infor;
+            }
+        }
+        return null;
+    }
+
     // MARK: Setup PBS
-    public void setupPBS(HostCustom hostCus) {
+    void setupPBS(HostCustom hostCus) {
         this.log("Host: " + hostCus.pbHost + " | AccountId: " + hostCus.pbAccountId + " | storedAuctionResponse: " + hostCus.storedAuctionResponse);
         if (hostCus.pbHost.equalsIgnoreCase("Appnexus")) {
             PrebidMobile.setPrebidServerHost(Host.APPNEXUS);
@@ -219,43 +217,18 @@ public class PBMobileAds {
         PrebidMobile.setStoredAuctionResponse(hostCus.storedAuctionResponse);
     }
 
-    public void enableCOPPA() {
-        TargetingParams.setSubjectToCOPPA(true);
-    }
-
-    public void disableCOPPA() {
-        TargetingParams.setSubjectToCOPPA(false);
-    }
-
-    public void setGender(PBMobileAds.GENDER gender) {
-        if (gender == GENDER.MALE) {
-            TargetingParams.setGender(TargetingParams.GENDER.MALE);
-        } else if (gender == GENDER.FEMALE) {
-            TargetingParams.setGender(TargetingParams.GENDER.FEMALE);
-        } else if (gender == GENDER.UNKNOWN) {
-            TargetingParams.setGender(TargetingParams.GENDER.UNKNOWN);
+    void setGDPR() {
+        if (PBMobileAds.getInstance().gdprConfirm) {
+            String consentStr = CMPStorageConsentManager.getConsentString(PBMobileAds.getInstance().getContextApp());
+            if (consentStr != null && consentStr != "") {
+                TargetingParams.setSubjectToGDPR(true);
+                TargetingParams.setGDPRConsentString(CMPStorageConsentManager.getConsentString(PBMobileAds.getInstance().getContextApp()));
+            }
         }
     }
 
-    public void setYearOfBirth(int yearOfBirth) throws Exception {
-        TargetingParams.setYearOfBirth(yearOfBirth);
-    }
-
-    public boolean log(String object) {
-        Log.d("PBMobileAds", object);
-        return false;
-    }
-
-    public static enum GENDER {
-        FEMALE,
-        MALE,
-        UNKNOWN;
-
-        private GENDER() {
-        }
-    }
-
-    public String getADError(int errorCode) {
+    // MARK: Get Error
+    String getADError(int errorCode) {
         String messErr = "";
         switch (errorCode) {
             case AdRequest.ERROR_CODE_INTERNAL_ERROR:
@@ -275,7 +248,7 @@ public class PBMobileAds {
         return messErr;
     }
 
-    public String getAdRewardedError(int errorCode) {
+    String getAdRewardedError(int errorCode) {
         String messErr = "";
         switch (errorCode) {
             case RewardedAdCallback.ERROR_CODE_INTERNAL_ERROR:
@@ -309,6 +282,44 @@ public class PBMobileAds {
 
         return null;
     }
+
+    // MARK: - Public FUNC
+    public void log(String object) {
+        Log.d("PBMobileAds", object);
+    }
+
+    public Context getContextApp() {
+        return this.contextApp;
+    }
+
+    public void enableCOPPA() {
+        TargetingParams.setSubjectToCOPPA(true);
+    }
+
+    public void disableCOPPA() {
+        TargetingParams.setSubjectToCOPPA(false);
+    }
+
+    public void setGender(PBMobileAds.GENDER gender) {
+        if (gender == GENDER.MALE) {
+            TargetingParams.setGender(TargetingParams.GENDER.MALE);
+        } else if (gender == GENDER.FEMALE) {
+            TargetingParams.setGender(TargetingParams.GENDER.FEMALE);
+        } else if (gender == GENDER.UNKNOWN) {
+            TargetingParams.setGender(TargetingParams.GENDER.UNKNOWN);
+        }
+    }
+
+    public void setYearOfBirth(int yearOfBirth) throws Exception {
+        TargetingParams.setYearOfBirth(yearOfBirth);
+    }
+
+    public enum GENDER {
+        FEMALE,
+        MALE,
+        UNKNOWN
+    }
+
 }
 
 
