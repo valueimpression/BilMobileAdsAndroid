@@ -20,5 +20,13 @@
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
 
+-keep public class UADBanner
+-keep public class UADInterstitial
+-keep public class UADListener
+-keep public class UADRewarded
+-keep public class UADRewardedListener
+-keep public class UPBMobileAds
+-keep public class Utils
+
 -keep class com.bil.** { *; }
 -keep class com.google.android.gms.ads.** { *; }

@@ -142,7 +142,7 @@ public class UADInterstitial {
     }
 
     /**
-     * preLoads an {@link ADBanner}.
+     * preLoads an {@link ADInterstitial}.
      */
     public void preLoad() {
         if (!isPluginReady()) return;
@@ -158,7 +158,7 @@ public class UADInterstitial {
     }
 
     /**
-     * Load the {@link ADBanner} if it has loaded.
+     * Load the {@link ADInterstitial} if it has loaded.
      */
     public void show() {
         if (!isPluginReady()) return;
