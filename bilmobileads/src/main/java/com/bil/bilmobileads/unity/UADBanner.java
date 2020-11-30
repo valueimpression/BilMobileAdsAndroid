@@ -72,7 +72,7 @@ public class UADBanner {
         this.unityActivity = unityActivity;
         this.adListener = adListener;
         this.isLoaded = false;
-        this.isHidden = true;
+        this.isHidden = false;
     }
 
     public boolean isPluginReady() {
