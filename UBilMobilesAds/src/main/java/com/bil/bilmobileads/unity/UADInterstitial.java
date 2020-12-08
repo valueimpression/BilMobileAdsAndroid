@@ -3,9 +3,7 @@ package com.bil.bilmobileads.unity;
 import android.app.Activity;
 import android.util.Log;
 
-import com.bil.bilmobileads.ADBanner;
 import com.bil.bilmobileads.ADInterstitial;
-import com.bil.bilmobileads.PBMobileAds;
 import com.bil.bilmobileads.interfaces.AdDelegate;
 
 public class UADInterstitial {
@@ -35,7 +33,7 @@ public class UADInterstitial {
 
     public boolean isPluginReady() {
         if (interstitial == null) {
-            PBMobileAds.getInstance().log("ADInterstitial is null. You need init ADInterstitial first.");
+            Log.d(Utils.LOGTAG, "ADInterstitial is null. You need init ADInterstitial first.");
             return false;
         }
         return true;

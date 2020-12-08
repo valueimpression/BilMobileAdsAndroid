@@ -6,7 +6,7 @@ public enum ADType {
     Banner(Constants.BANNER),
     SmartBanner(Constants.SMART_BANNER),
     Interstitial(Constants.INTERSTITIAL),
-    Rewarded(Constants.REWARED);
+    Rewarded(Constants.REWARDED);
 
     private String type;
 

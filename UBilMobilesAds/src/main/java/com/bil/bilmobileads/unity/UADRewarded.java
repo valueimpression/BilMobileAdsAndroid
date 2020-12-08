@@ -4,7 +4,6 @@ import android.app.Activity;
 import android.util.Log;
 
 import com.bil.bilmobileads.ADRewarded;
-import com.bil.bilmobileads.PBMobileAds;
 import com.bil.bilmobileads.entity.ADRewardItem;
 import com.bil.bilmobileads.interfaces.AdRewardedDelegate;
 
@@ -35,7 +34,7 @@ public class UADRewarded {
 
     public boolean isPluginReady() {
         if (rewarded == null) {
-            PBMobileAds.getInstance().log("ADRewarded is null. You need init ADRewarded first.");
+            Log.d(Utils.LOGTAG, "ADRewarded is null. You need init ADRewarded first.");
             return false;
         }
         return true;

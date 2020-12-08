@@ -1,5 +1,5 @@
 package com.bil.bilmobileads.interfaces;
 
-public interface TimerCompleteListener {
+public interface WorkCompleteDelegate {
     public void doWork();
 }

@@ -60,8 +60,9 @@ public class ServerContacter {
             //                        StrictMode.enableDefaults();
 
             // My CMP
-//            String inputLine = "{\"message\":\"\",\"status\":1,\"regulation\":1,\"url\":\"http://static.vliplatform.com/plugins/appCMP/#cmpscreen\"}";
-            String inputLine = "{\"message\":\"\",\"status\":1,\"regulation\":1,\"url\":\"http://https://static.vliplatform.com/plugins/appCMP/v2\"}";
+            //  String inputLine = "{\"message\":\"\",\"status\":1,\"regulation\":1,\"url\":\"http://static.vliplatform.com/plugins/appCMP/#cmpscreen\"}";
+            //  String inputLine = "{\"message\":\"\",\"status\":1,\"regulation\":1,\"url\":\"http://10.0.2.2:8000\"}";
+            String inputLine = "{\"message\":\"\",\"status\":1,\"regulation\":1,\"url\":\"https://static.vliplatform.com/plugins/appCMP/v2/\"}";
             JSONObject response = new JSONObject(inputLine);
             ServerResponse serverResponse = new ServerResponse();
             serverResponse.setStatus(response.getInt("status"));

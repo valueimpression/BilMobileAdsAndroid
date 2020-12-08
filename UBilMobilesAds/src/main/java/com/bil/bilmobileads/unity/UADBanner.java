@@ -13,7 +13,6 @@ import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 
 import com.bil.bilmobileads.ADBanner;
-import com.bil.bilmobileads.PBMobileAds;
 import com.bil.bilmobileads.interfaces.AdDelegate;
 
 import java.util.concurrent.Callable;
@@ -77,7 +76,7 @@ public class UADBanner {
 
     public boolean isPluginReady() {
         if (banner == null) {
-            PBMobileAds.getInstance().log("ADBanner is null. You need init ADBanner first.");
+            Log.d(Utils.LOGTAG, "ADBanner is null. You need init ADBanner first.");
             return false;
         }
         return true;
@@ -119,13 +118,13 @@ public class UADBanner {
                     @Override
                     public void onAdLoaded() {
                         isLoaded = true;
+
+                        updateADPosition();
                         if (adListener != null) {
                             new Thread(new Runnable() {
                                 @Override
                                 public void run() {
-                                    if (adListener != null) {
-                                        adListener.onAdLoaded();
-                                    }
+                                    if (adListener != null) adListener.onAdLoaded();
                                 }
                             }).start();
                         }
@@ -137,9 +136,7 @@ public class UADBanner {
                             new Thread(new Runnable() {
                                 @Override
                                 public void run() {
-                                    if (adListener != null) {
-                                        adListener.onAdOpened();
-                                    }
+                                    if (adListener != null) adListener.onAdOpened();
                                 }
                             }).start();
                         }
@@ -151,9 +148,7 @@ public class UADBanner {
                             new Thread(new Runnable() {
                                 @Override
                                 public void run() {
-                                    if (adListener != null) {
-                                        adListener.onAdClosed();
-                                    }
+                                    if (adListener != null) adListener.onAdClosed();
                                 }
                             }).start();
                         }
@@ -165,9 +160,7 @@ public class UADBanner {
                             new Thread(new Runnable() {
                                 @Override
                                 public void run() {
-                                    if (adListener != null) {
-                                        adListener.onAdClicked();
-                                    }
+                                    if (adListener != null) adListener.onAdClicked();
                                 }
                             }).start();
                         }
@@ -179,9 +172,7 @@ public class UADBanner {
                             new Thread(new Runnable() {
                                 @Override
                                 public void run() {
-                                    if (adListener != null) {
-                                        adListener.onAdLeftApplication();
-                                    }
+                                    if (adListener != null) adListener.onAdLeftApplication();
                                 }
                             }).start();
                         }
@@ -193,9 +184,7 @@ public class UADBanner {
                             new Thread(new Runnable() {
                                 @Override
                                 public void run() {
-                                    if (adListener != null) {
-                                        adListener.onAdFailedToLoad(errorCode);
-                                    }
+                                    if (adListener != null) adListener.onAdFailedToLoad(errorCode);
                                 }
                             }).start();
                         }
@@ -233,6 +222,8 @@ public class UADBanner {
                 isHidden = false;
                 adPlaceholder.setVisibility(View.VISIBLE);
                 updateADPosition();
+
+                banner.startFetchData();
             }
         });
     }
@@ -249,6 +240,8 @@ public class UADBanner {
                 Log.d(Utils.LOGTAG, "Calling hide() ADBanner");
                 isHidden = true;
                 adPlaceholder.setVisibility(View.GONE);
+
+                banner.stopFetchData();
             }
         });
     }

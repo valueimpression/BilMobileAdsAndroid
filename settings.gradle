@@ -1,3 +1,4 @@
 rootProject.name='BilMobileAdsAndroid'
 include ':app'
 include ':bilmobileads'
+include ':UBilMobilesAds'

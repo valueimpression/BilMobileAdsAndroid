@@ -1,5 +1,6 @@
 package com.consentmanager.sdk.activities;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.net.ConnectivityManager;
@@ -8,7 +9,6 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.TextUtils;
-import android.util.Base64;
 import android.view.ViewGroup;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebView;
@@ -17,9 +17,8 @@ import android.widget.LinearLayout;
 
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
-import androidx.appcompat.app.ActionBar;
-import androidx.appcompat.app.AppCompatActivity;
 
+import com.consentmanager.sdk.CMPConsentTool;
 import com.consentmanager.sdk.callbacks.OnCloseCallback;
 import com.consentmanager.sdk.callbacks.OnNetworkExceptionCallback;
 import com.consentmanager.sdk.exceptions.CMPConsentToolNetworkException;
@@ -36,12 +35,10 @@ import com.consentmanager.sdk.storage.CMPPrivateStorage;
 import com.consentmanager.sdk.storage.CMPStorageConsentManager;
 import com.consentmanager.sdk.storage.CMPStorageV1;
 
-import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
 import java.util.Calendar;
 import java.util.Date;
 
-public class CMPConsentToolActivity extends AppCompatActivity {
+public class CMPConsentToolActivity extends Activity {
     private static final String CMP_SETTINGS_EXTRA = "cmp_settings";
 
     private static OnCloseCallback onCloseCallback;
@@ -73,6 +70,34 @@ public class CMPConsentToolActivity extends AppCompatActivity {
         } else {
             if (networkCallback != null) {
                 networkCallback.onErrorOccur("The Network is not reachable to show the WebView");
+            }
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+        // My CMP: Reject
+        String consentStr = CMPStorageConsentManager.getConsentString(CMPConsentTool.getInstance().getContext());
+        if (consentStr.isEmpty()) {
+            Date now = new Date();
+
+            CMPStorageV1.clearConsents(CMPConsentToolActivity.this);
+            //  CMPStorageV2.clearConsents(CMPConsentToolActivity.this);
+            CMPStorageConsentManager.clearConsents(CMPConsentToolActivity.this);
+            CMPStorageConsentManager.setConsentString(CMPConsentToolActivity.this, null);
+
+            // Set Time Ask Again After Rejected: 365d
+            Calendar add14Day = Calendar.getInstance();
+            add14Day.setTime(now);
+            add14Day.add(Calendar.DATE, 365);
+            CMPPrivateStorage.setLastRequested(CMPConsentToolActivity.this, add14Day.getTime());
+
+            // Close Webview
+            if (onCloseCallback != null) {
+                onCloseCallback.onWebViewClosed();
+                onCloseCallback = null;
             }
         }
     }
@@ -175,62 +200,50 @@ public class CMPConsentToolActivity extends AppCompatActivity {
     private class GDPRWebViewClient extends WebViewClient {
         @Override
         public boolean shouldOverrideUrlLoading(WebView view, String url) {
-            handleWebViewInteraction(url);
+            handleReceivedConsentString(url);
             return true;
         }
 
         @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
         @Override
         public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
-            handleWebViewInteraction(String.valueOf(request.getUrl()));
+            handleReceivedConsentString(String.valueOf(request.getUrl()));
             return true;
         }
 
         private void handleWebViewInteraction(String url) {
             handleReceivedConsentString(url);
-
-            if (onCloseCallback != null) {
-                onCloseCallback.onWebViewClosed();
-                onCloseCallback = null;
-            }
-
-            finish();
         }
 
         private void handleReceivedConsentString(String url) {
             System.out.println(url);
+            if (url == null) return;
 
             // My CMP
             String[] values = new String[0];
-            if (url != null) {
+            if (url.indexOf("consent://") != -1) {
                 values = url.split("consent://");
             }
             if (values.length > 0) {
                 String consentStr = values[1];
 
-                // Reject
+                // Accepted
+                CMPStorageConsentManager.setConsentString(CMPConsentToolActivity.this, consentStr);
+                proceedConsentString(consentStr);
+
+                // Set Time Ask Again After Accepted
                 Date now = new Date();
-                if (consentStr.equalsIgnoreCase("consentrejected")) {
-                    CMPStorageV1.clearConsents(CMPConsentToolActivity.this);
-                    //  CMPStorageV2.clearConsents(CMPConsentToolActivity.this);
-                    CMPStorageConsentManager.clearConsents(CMPConsentToolActivity.this);
-                    CMPStorageConsentManager.setConsentString(CMPConsentToolActivity.this, null);
+                Calendar add365Day = Calendar.getInstance();
+                add365Day.setTime(now);
+                add365Day.add(Calendar.DATE, 365);
+                CMPPrivateStorage.setLastRequested(CMPConsentToolActivity.this, add365Day.getTime());
 
-                    // Set Time Ask Again After Rejected
-                    Calendar add14Day = Calendar.getInstance();
-                    add14Day.setTime(now);
-                    add14Day.add(Calendar.DATE, 14);
-                    CMPPrivateStorage.setLastRequested(CMPConsentToolActivity.this, add14Day.getTime());
-                } else { // Accepted
-                    CMPStorageConsentManager.setConsentString(CMPConsentToolActivity.this, consentStr);
-                    proceedConsentString(consentStr);
-
-                    // Set Time Ask Again After Accepted
-                    Calendar add365Day = Calendar.getInstance();
-                    add365Day.setTime(now);
-                    add365Day.add(Calendar.DATE, 365);
-                    CMPPrivateStorage.setLastRequested(CMPConsentToolActivity.this, add365Day.getTime());
+                // Close Webview
+                if (onCloseCallback != null) {
+                    onCloseCallback.onWebViewClosed();
+                    onCloseCallback = null;
                 }
+                finish();
 
                 //                //encode String Base 64:
                 //                String fullString = new String(Base64.decode(values[1], Base64.DEFAULT));

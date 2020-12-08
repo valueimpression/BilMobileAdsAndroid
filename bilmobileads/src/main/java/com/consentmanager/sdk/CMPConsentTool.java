@@ -1,23 +1,11 @@
 package com.consentmanager.sdk;
 
-import android.app.Activity;
 import android.app.AlertDialog;
-import android.app.Application;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.content.Intent;
-import android.content.IntentFilter;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
-import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
-
-
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.appcompat.app.AppCompatActivity;
 
 import com.consentmanager.sdk.activities.CMPConsentToolActivity;
 import com.consentmanager.sdk.callbacks.CustomOpenActionCallback;
@@ -131,57 +119,20 @@ public class CMPConsentTool {
         this.config = config;
         this.checkAndProceedConsentUpdate();
 
-        // on reload app listener
-        ((AppCompatActivity) context).getApplication().registerActivityLifecycleCallbacks(new Application.ActivityLifecycleCallbacks() {
-
-            @Override
-            public void onActivityCreated(@NonNull Activity activity, @Nullable Bundle savedInstanceState) {
-            }
-
-            @Override
-            public void onActivityStarted(@NonNull Activity activity) {
-
-            }
-
-            @Override
-            public void onActivityResumed(@NonNull Activity activity) {
-                CMPConsentTool.this.checkAndProceedConsentUpdate();
-            }
-
-            @Override
-            public void onActivityPaused(@NonNull Activity activity) {
-            }
-
-            @Override
-            public void onActivityStopped(@NonNull Activity activity) {
-
-            }
-
-            @Override
-            public void onActivitySaveInstanceState(@NonNull Activity activity, @NonNull Bundle outState) {
-
-            }
-
-            @Override
-            public void onActivityDestroyed(@NonNull Activity activity) {
-
-            }
-        });
-
-        //on connection settings changed listener
-        IntentFilter filter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
-        networkReceiver = new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
-                NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
-                boolean isConnected = activeNetwork != null && activeNetwork.isConnected();
-                if (isConnected) {
-                    CMPConsentTool.this.checkAndProceedConsentUpdate();
-                }
-            }
-        };
-        this.context.registerReceiver(networkReceiver, filter);
+//        //on connection settings changed listener
+//        IntentFilter filter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
+//        networkReceiver = new BroadcastReceiver() {
+//            @Override
+//            public void onReceive(Context context, Intent intent) {
+//                ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+//                NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
+//                boolean isConnected = activeNetwork != null && activeNetwork.isConnected();
+//                if (isConnected) {
+//                    CMPConsentTool.this.checkAndProceedConsentUpdate();
+//                }
+//            }
+//        };
+//        this.context.registerReceiver(networkReceiver, filter);
     }
 
     private CMPConsentTool(Context context, CMPConfig config, OnCloseCallback onCloseCallback) {
@@ -192,41 +143,41 @@ public class CMPConsentTool {
 
         this.checkAndProceedConsentUpdate();
         // on reload app listener
-        ((AppCompatActivity) context).getApplication().registerActivityLifecycleCallbacks(new Application.ActivityLifecycleCallbacks() {
-
-            @Override
-            public void onActivityCreated(@NonNull Activity activity, @Nullable Bundle savedInstanceState) {
-            }
-
-            @Override
-            public void onActivityStarted(@NonNull Activity activity) {
-
-            }
-
-            @Override
-            public void onActivityResumed(@NonNull Activity activity) {
-//                CMPConsentTool.this.checkAndProceedConsentUpdate();
-            }
-
-            @Override
-            public void onActivityPaused(@NonNull Activity activity) {
-            }
-
-            @Override
-            public void onActivityStopped(@NonNull Activity activity) {
-
-            }
-
-            @Override
-            public void onActivitySaveInstanceState(@NonNull Activity activity, @NonNull Bundle outState) {
-
-            }
-
-            @Override
-            public void onActivityDestroyed(@NonNull Activity activity) {
-
-            }
-        });
+//        ((AppCompatActivity) context).getApplication().registerActivityLifecycleCallbacks(new Application.ActivityLifecycleCallbacks() {
+//
+//            @Override
+//            public void onActivityCreated(@NonNull Activity activity, @Nullable Bundle savedInstanceState) {
+//            }
+//
+//            @Override
+//            public void onActivityStarted(@NonNull Activity activity) {
+//
+//            }
+//
+//            @Override
+//            public void onActivityResumed(@NonNull Activity activity) {
+////                CMPConsentTool.this.checkAndProceedConsentUpdate();
+//            }
+//
+//            @Override
+//            public void onActivityPaused(@NonNull Activity activity) {
+//            }
+//
+//            @Override
+//            public void onActivityStopped(@NonNull Activity activity) {
+//
+//            }
+//
+//            @Override
+//            public void onActivitySaveInstanceState(@NonNull Activity activity, @NonNull Bundle outState) {
+//
+//            }
+//
+//            @Override
+//            public void onActivityDestroyed(@NonNull Activity activity) {
+//
+//            }
+//        });
 
 //        //on connection settings changed listener
 //        IntentFilter filter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
@@ -542,15 +493,14 @@ public class CMPConsentTool {
             return false;
         }
     }
+
     public static boolean needShowCMP(Context context) {
         String consentS = CMPStorageConsentManager.getConsentString(context);
         Date lastDate = CMPPrivateStorage.getLastRequested(context);
 
         if (consentS == null || consentS.isEmpty()) {
-            // Reject -> Answer after 14d
-            if (lastDate != null) {
-                return compareNowLessFuture(lastDate);
-            }
+            // Reject -> Answer after x day or 365d
+            if (lastDate != null) return compareNowLessFuture(lastDate);
             // First Time
             return true;
         } else {

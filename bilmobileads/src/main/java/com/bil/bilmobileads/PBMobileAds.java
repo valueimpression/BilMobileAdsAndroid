@@ -2,7 +2,7 @@
 package com.bil.bilmobileads;
 
 import android.content.Context;
-import android.content.res.Resources;
+import android.os.Build;
 import android.util.Log;
 import android.webkit.WebView;
 
@@ -11,10 +11,13 @@ import com.bil.bilmobileads.entity.ADType;
 import com.bil.bilmobileads.entity.AdInfor;
 import com.bil.bilmobileads.entity.AdUnitObj;
 import com.bil.bilmobileads.entity.BannerSize;
+import com.bil.bilmobileads.entity.LogType;
 import com.bil.bilmobileads.entity.HostCustom;
-//import com.bil.bilmobileads.entity.TimerRecall;
 import com.bil.bilmobileads.interfaces.ResultCallback;
-//import com.bil.bilmobileads.interfaces.TimerCompleteListener;
+import com.bil.bilmobileads.interfaces.WorkCompleteDelegate;
+import com.consentmanager.sdk.CMPConsentTool;
+import com.consentmanager.sdk.callbacks.OnCloseCallback;
+import com.consentmanager.sdk.model.CMPConfig;
 import com.consentmanager.sdk.storage.CMPStorageConsentManager;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.rewarded.RewardedAdCallback;
@@ -34,17 +37,17 @@ public class PBMobileAds {
 
     // MARK: Context app
     private Context contextApp;
-
     // MARK: List Config
     ArrayList<AdUnitObj> listAdUnitObj = new ArrayList<AdUnitObj>();
-
     // MARK: api
     boolean isTestMode = false;
     boolean gdprConfirm = false;
     private String pbServerEndPoint = "";
+    boolean isShowCMP = false;
+    // LOG:
+    private final boolean DEBUG_MODE = false;
 
     private PBMobileAds() {
-        this.log("PBMobileAds Init");
     }
 
     public static PBMobileAds getInstance() {
@@ -53,41 +56,43 @@ public class PBMobileAds {
 
     // MARK: - initialize
     public void initialize(Context context, boolean testMode) {
+        if (context == null) {
+            PBMobileAds.getInstance().log(LogType.ERROR, "Context is null");
+            throw new NullPointerException();
+        }
         this.contextApp = context;
         this.isTestMode = testMode;
 
         // Declare in init to the user agent could be passed in first call
         PrebidMobile.setShareGeoLocation(true);
         PrebidMobile.setApplicationContext(context.getApplicationContext());
-        WebView webView;
-        try {
-            webView = new WebView(context);
+
+        this.log(LogType.INFOR, "PBMobileAds Init");
+        this.log(LogType.DEBUG, "PBMobileAds Init Webview With SDK: " + Build.VERSION.SDK_INT);
+        if (Build.VERSION.SDK_INT > 21) {
+            WebView webView = new WebView(context);
             webView.clearCache(true);
-        } catch (Resources.NotFoundException e) {
-            // Some older devices can crash when instantiating a WebView, due to a Resources$NotFoundException
-            // Creating with the application Context fixes this, but is not generally recommended for view creation
-            webView = new WebView(context.getApplicationContext());
+        } else {
+            WebView webView = new WebView(context.getApplicationContext());
             webView.clearCache(true);
         }
     }
 
     // MARK: - Call API AD
     void getADConfig(final String adUnit, final ResultCallback resultAD) {
-        this.log("Start Request Config adUnit: " + adUnit);
-
-        //        final TimerRecall timerRecall = new TimerRecall(Constants.RECALL_CONFIGID_SERVER, 1000);
-        //        timerRecall.setListener(new TimerCompleteListener() {
-        //            @Override
-        //            public void doWork() {
-        //                getADConfig(adUnit, resultAD);
-        //            }
-        //        });
+        this.log(LogType.DEBUG, "Start Request Config adUnit: " + adUnit);
 
         HttpApi httpApi = new HttpApi<JSONObject>(Constants.GET_DATA_CONFIG + adUnit, new ResultCallback<JSONObject, Exception>() {
             @Override
             public void success(JSONObject dataJSON) {
-                //  timerRecall.cancel();
                 try {
+                    // Check AdUnitObj Exist if init new Ad > 2
+                    AdUnitObj adUnitObjCheck = getAdUnitObj(adUnit);
+                    if (adUnitObjCheck != null) {
+                        resultAD.success(adUnitObjCheck);
+                        return;
+                    }
+
                     pbServerEndPoint = dataJSON.getString("pbServerEndPoint");
                     gdprConfirm = dataJSON.getBoolean("gdprConfirm");
 
@@ -120,7 +125,7 @@ public class PBMobileAds {
 
                     // Validate defaultType Bid type
                     ADFormat defaultFormat = adunitJsonObj.getString("defaultType").equalsIgnoreCase(ADFormat.HTML.toString()) ? ADFormat.HTML : ADFormat.VAST;
-                    if (adInforList.size() < 2)  {
+                    if (adInforList.size() < 2) {
                         ADFormat bidType = adInforList.get(0).isVideo ? ADFormat.VAST : ADFormat.HTML;
                         defaultFormat = defaultFormat == bidType ? defaultFormat : bidType;
                     }
@@ -163,13 +168,13 @@ public class PBMobileAds {
                     resultAD.success(adUnitObj);
                 } catch (JSONException e) {
                     e.printStackTrace();
-                    PBMobileAds.getInstance().log(e.getLocalizedMessage());
+                    PBMobileAds.getInstance().log(LogType.ERROR, e.getLocalizedMessage());
                 } catch (NullPointerException e) {
                     e.printStackTrace();
-                    PBMobileAds.getInstance().log(e.getLocalizedMessage());
+                    PBMobileAds.getInstance().log(LogType.ERROR, e.getLocalizedMessage());
                 } catch (Exception e) {
                     e.printStackTrace();
-                    PBMobileAds.getInstance().log(e.getLocalizedMessage());
+                    PBMobileAds.getInstance().log(LogType.ERROR, e.getLocalizedMessage());
                 }
             }
 
@@ -202,13 +207,13 @@ public class PBMobileAds {
 
     // MARK: Setup PBS
     void setupPBS(HostCustom hostCus) {
-        this.log("Host: " + hostCus.pbHost + " | AccountId: " + hostCus.pbAccountId + " | storedAuctionResponse: " + hostCus.storedAuctionResponse);
+        this.log(LogType.DEBUG, "Host: " + hostCus.pbHost + " | AccountId: " + hostCus.pbAccountId + " | storedAuctionResponse: " + hostCus.storedAuctionResponse);
         if (hostCus.pbHost.equalsIgnoreCase("Appnexus")) {
             PrebidMobile.setPrebidServerHost(Host.APPNEXUS);
         } else if (hostCus.pbHost.equalsIgnoreCase("Rubicon")) {
             PrebidMobile.setPrebidServerHost(Host.RUBICON);
         } else if (hostCus.pbHost.equalsIgnoreCase("Custom")) {
-            this.log("Custom URL: " + this.pbServerEndPoint);
+            this.log(LogType.DEBUG, "Custom URL: " + this.pbServerEndPoint);
             Host.CUSTOM.setHostUrl(this.pbServerEndPoint);
             PrebidMobile.setPrebidServerHost(Host.CUSTOM);
         }
@@ -217,13 +222,42 @@ public class PBMobileAds {
         PrebidMobile.setStoredAuctionResponse(hostCus.storedAuctionResponse);
     }
 
+    // MARK: Show CMP + Setup GDPR
     void setGDPR() {
-        if (PBMobileAds.getInstance().gdprConfirm) {
-            String consentStr = CMPStorageConsentManager.getConsentString(PBMobileAds.getInstance().getContextApp());
-            if (consentStr != null && consentStr != "") {
-                TargetingParams.setSubjectToGDPR(true);
-                TargetingParams.setGDPRConsentString(CMPStorageConsentManager.getConsentString(PBMobileAds.getInstance().getContextApp()));
+        String consentString = CMPStorageConsentManager.getConsentString(this.contextApp);
+        if (!consentString.isEmpty()) {
+            TargetingParams.setSubjectToGDPR(true);
+            TargetingParams.setGDPRConsentString(consentString);
+        }
+    }
+
+    void showCMP(final WorkCompleteDelegate resultWork) {
+        if (this.isShowCMP) {
+            resultWork.doWork();
+            return;
+        }
+
+        if (this.gdprConfirm) {
+            if (CMPConsentTool.needShowCMP(this.contextApp)) {
+                PBMobileAds.getInstance().log(LogType.INFOR, "ConsentString Init");
+
+                this.isShowCMP = true;
+                String appName = this.contextApp.getApplicationInfo().loadLabel(this.contextApp.getPackageManager()).toString();
+                CMPConfig cmpConfig = CMPConfig.createInstance(15029, "consentmanager.mgr.consensu.org", appName, "EN");
+                CMPConsentTool.createInstance(contextApp, cmpConfig, new OnCloseCallback() {
+                    @Override
+                    public void onWebViewClosed() {
+                        isShowCMP = false;
+                        setGDPR();
+                        resultWork.doWork();
+                    }
+                });
+            } else {
+                this.setGDPR();
+                resultWork.doWork();
             }
+        } else {
+            resultWork.doWork();
         }
     }
 
@@ -284,8 +318,24 @@ public class PBMobileAds {
     }
 
     // MARK: - Public FUNC
-    public void log(String object) {
-        Log.d("PBMobileAds", object);
+    public void log(LogType errorType, String mess) {
+        switch (errorType) {
+            case DEBUG:
+                if (DEBUG_MODE) Log.d("PBMobileAds", mess);
+                break;
+            case ERROR:
+                Log.e("PBMobileAds", mess);
+                break;
+            case INFOR:
+                Log.i("PBMobileAds", mess);
+                break;
+            case VERBOSE:
+                Log.v("PBMobileAds", mess);
+                break;
+            case WARN:
+                Log.w("PBMobileAds", mess);
+                break;
+        }
     }
 
     public Context getContextApp() {

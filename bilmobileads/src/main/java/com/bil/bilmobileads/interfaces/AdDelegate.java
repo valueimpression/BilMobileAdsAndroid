@@ -15,7 +15,7 @@ public class AdDelegate {
     }
 
     /*
-     * Called when back to application after click ad.
+     * Called when back to application after ad closed.
      * */
     public void onAdClosed() {
     }

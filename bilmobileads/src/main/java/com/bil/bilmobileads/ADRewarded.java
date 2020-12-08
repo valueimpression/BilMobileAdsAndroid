@@ -1,14 +1,12 @@
 package com.bil.bilmobileads;
 
 import android.app.Activity;
-import android.content.Context;
+import android.util.Log;
 
 import com.bil.bilmobileads.entity.ADRewardItem;
+import com.bil.bilmobileads.entity.LogType;
 import com.bil.bilmobileads.interfaces.ResultCallback;
-import com.consentmanager.sdk.CMPConsentTool;
-import com.consentmanager.sdk.callbacks.OnCloseCallback;
-import com.consentmanager.sdk.model.CMPConfig;
-import com.consentmanager.sdk.storage.CMPStorageConsentManager;
+import com.bil.bilmobileads.interfaces.WorkCompleteDelegate;
 import com.google.android.gms.ads.doubleclick.PublisherAdRequest;
 import com.google.android.gms.ads.rewarded.RewardItem;
 import com.google.android.gms.ads.rewarded.RewardedAd;
@@ -17,15 +15,12 @@ import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback;
 import com.bil.bilmobileads.entity.ADFormat;
 import com.bil.bilmobileads.entity.AdInfor;
 import com.bil.bilmobileads.entity.AdUnitObj;
-import com.bil.bilmobileads.entity.TimerRecall;
 import com.bil.bilmobileads.interfaces.AdRewardedDelegate;
-import com.bil.bilmobileads.interfaces.TimerCompleteListener;
 
 import org.prebid.mobile.AdUnit;
 import org.prebid.mobile.OnCompleteListener;
 import org.prebid.mobile.ResultCode;
 import org.prebid.mobile.RewardedVideoAdUnit;
-import org.prebid.mobile.TargetingParams;
 
 import androidx.annotation.NonNull;
 
@@ -48,43 +43,43 @@ public class ADRewarded {
 
     public ADRewarded(Activity activity, final String placementStr) {
         if (activity == null || placementStr == null) {
-            PBMobileAds.getInstance().log("Activity and Placement is not nullable");
+            PBMobileAds.getInstance().log(LogType.ERROR, "Activity or Placement is null");
             throw new NullPointerException();
         }
-        PBMobileAds.getInstance().log("AD Interstitial Init: " + placementStr);
+        PBMobileAds.getInstance().log(LogType.INFOR, "ADRewarded placement: " + placementStr + " Init");
 
         this.activityAd = activity;
         this.placement = placementStr;
 
-        // Get AdUnit
+        this.getConfigAD();
+    }
+
+    // MARK: - Handle AD
+    void getConfigAD() {
         this.adUnitObj = PBMobileAds.getInstance().getAdUnitObj(this.placement);
         if (this.adUnitObj == null) {
+            this.isFetchingAD = true;
+
+            // Get AdUnit Info
             PBMobileAds.getInstance().getADConfig(this.placement, new ResultCallback<AdUnitObj, Exception>() {
                 @Override
                 public void success(AdUnitObj data) {
-                    PBMobileAds.getInstance().log("Get Config ADRewarded placement: " + placementStr + " Success");
+                    PBMobileAds.getInstance().log(LogType.INFOR, "ADRewarded placement: " + placement + " Init Success");
+                    isFetchingAD = false;
                     adUnitObj = data;
 
-                    final Context contextApp = PBMobileAds.getInstance().getContextApp();
-                    if (PBMobileAds.getInstance().gdprConfirm && CMPConsentTool.needShowCMP(contextApp)) {
-                        String appName = contextApp.getApplicationInfo().loadLabel(contextApp.getPackageManager()).toString();
-
-                        CMPConfig cmpConfig = CMPConfig.createInstance(15029, "consentmanager.mgr.consensu.org", appName, "EN");
-                        CMPConsentTool.createInstance(contextApp, cmpConfig, new OnCloseCallback() {
-                            @Override
-                            public void onWebViewClosed() {
-                                PBMobileAds.getInstance().log("ConsentString: " + CMPStorageConsentManager.getConsentString(contextApp));
-                                preLoad();
-                            }
-                        });
-                    } else {
-                        preLoad();
-                    }
+                    PBMobileAds.getInstance().showCMP(new WorkCompleteDelegate() {
+                        @Override
+                        public void doWork() {
+                            preLoad();
+                        }
+                    });
                 }
 
                 @Override
                 public void failure(Exception error) {
-                    PBMobileAds.getInstance().log("Get Config ADRewarded placement: " + placementStr + " Fail with Error: " + error.getLocalizedMessage());
+                    PBMobileAds.getInstance().log(LogType.INFOR, "ADRewarded placement: " + placement + " Init Failed with Error: " + error.getLocalizedMessage() + ". Please check your internet connect.");
+                    isFetchingAD = false;
                 }
             });
         } else {
@@ -110,7 +105,7 @@ public class ADRewarded {
                 public void onRewardedAdLoaded() {
                     isFetchingAD = false;
 
-                    PBMobileAds.getInstance().log("onRewardedAdLoaded: ADRewarded Placement '" + placement + "' Loaded Success");
+                    PBMobileAds.getInstance().log(LogType.INFOR, "onRewardedAdLoaded: ADRewarded Placement '" + placement + "' Loaded Success");
                     if (adDelegate != null) adDelegate.onRewardedAdLoaded();
                 }
 
@@ -119,7 +114,7 @@ public class ADRewarded {
                     isFetchingAD = false;
 
                     String messErr = "onRewardedAdFailedToLoad: ADRewarded Placement '" + placement + "' failed: " + PBMobileAds.getInstance().getAdRewardedError(errorCode);
-                    PBMobileAds.getInstance().log(messErr);
+                    PBMobileAds.getInstance().log(LogType.INFOR, messErr);
                     if (adDelegate != null) adDelegate.onRewardedAdFailedToLoad(messErr);
                 }
             });
@@ -127,39 +122,43 @@ public class ADRewarded {
             this.isFetchingAD = false;
 
             if (resultCode == ResultCode.NO_BIDS) {
-                PBMobileAds.getInstance().log("ADRewarded Placement '" + this.placement + "' No Bids.");
+                PBMobileAds.getInstance().log(LogType.INFOR, "ADRewarded Placement '" + this.placement + "' No Bids.");
             } else if (resultCode == ResultCode.TIMEOUT) {
-                PBMobileAds.getInstance().log("ADRewarded Placement '" + this.placement + "' Timeout. Please check your internet connect.");
+                PBMobileAds.getInstance().log(LogType.INFOR, "ADRewarded Placement '" + this.placement + "' Timeout. Please check your internet connect.");
             }
         }
     }
 
     // MARK: - Public FUNC
-    public boolean preLoad() {
-        PBMobileAds.getInstance().log("ADRewarded Placement '" + this.placement + "' - isReady: " + this.isReady() + " | isFetchingAD: " + this.isFetchingAD);
-        if (this.adUnitObj == null || this.isReady() || this.isFetchingAD) return false;
+    public void preLoad() {
+        PBMobileAds.getInstance().log(LogType.DEBUG, "ADRewarded Placement '" + this.placement + "' - isReady: " + this.isReady() + " | isFetchingAD: " + this.isFetchingAD);
+        if (this.adUnitObj == null || this.isReady() || this.isFetchingAD) {
+            if (this.adUnitObj == null && !this.isFetchingAD) {
+                PBMobileAds.getInstance().log(LogType.INFOR, "ADRewarded placement: " + this.placement + " is not ready to load.");
+                this.getConfigAD();
+                return;
+            }
+            return;
+        }
         this.resetAD();
 
         // Check Active
         if (!this.adUnitObj.isActive || this.adUnitObj.adInfor.size() <= 0) {
-            PBMobileAds.getInstance().log("ADRewarded Placement '" + this.placement + "' is not active or not exist.");
-            return false;
+            PBMobileAds.getInstance().log(LogType.INFOR, "ADRewarded Placement '" + this.placement + "' is not active or not exist.");
+            return;
         }
-
-        // Set GDPR
-        PBMobileAds.getInstance().setGDPR();
 
         // Check AdInfor
         boolean isVideo = this.adUnitObj.defaultFormat == ADFormat.VAST;
         AdInfor adInfor = PBMobileAds.getInstance().getAdInfor(isVideo, this.adUnitObj);
         if (adInfor == null) {
-            PBMobileAds.getInstance().log("AdInfor of ADRewarded Placement '" + this.placement + "' is not exist.");
-            return false;
+            PBMobileAds.getInstance().log(LogType.INFOR, "AdInfor of ADRewarded Placement '" + this.placement + "' is not exist.");
+            return;
         }
 
-        PBMobileAds.getInstance().log("Preload ADRewarded Placement: " + this.placement);
+        PBMobileAds.getInstance().log(LogType.INFOR, "Preload ADRewarded Placement: " + this.placement);
         PBMobileAds.getInstance().setupPBS(adInfor.host);
-        PBMobileAds.getInstance().log("[ADRewarded Video] - configId: " + adInfor.configId + " | adUnitID: " + adInfor.adUnitID);
+        PBMobileAds.getInstance().log(LogType.DEBUG, "[ADRewarded Video] - configId: " + adInfor.configId + " | adUnitID: " + adInfor.adUnitID);
         this.adUnit = new RewardedVideoAdUnit(adInfor.configId);
         this.amRewarded = new RewardedAd(PBMobileAds.getInstance().getContextApp(), adInfor.adUnitID);
 
@@ -173,12 +172,10 @@ public class ADRewarded {
         this.adUnit.fetchDemand(this.amRequest, new OnCompleteListener() {
             @Override
             public void onComplete(ResultCode resultCode) {
-                PBMobileAds.getInstance().log("Prebid demand fetch ADRewarded placement '" + placement + "' for DFP: " + resultCode.name());
+                PBMobileAds.getInstance().log(LogType.DEBUG, "PBS demand fetch ADRewarded placement '" + placement + "' for DFP: " + resultCode.name());
                 handlerResult(resultCode);
             }
         });
-
-        return true;
     }
 
     public void show() {
@@ -186,20 +183,20 @@ public class ADRewarded {
             this.amRewarded.show(this.activityAd, new RewardedAdCallback() {
                 @Override
                 public void onRewardedAdOpened() {
-                    PBMobileAds.getInstance().log("onRewardedAdOpened: ADRewarded Placement '" + placement + "'");
+                    PBMobileAds.getInstance().log(LogType.INFOR, "onRewardedAdOpened: ADRewarded Placement '" + placement + "'");
                     if (adDelegate != null) adDelegate.onRewardedAdOpened();
                 }
 
                 @Override
                 public void onRewardedAdClosed() {
-                    PBMobileAds.getInstance().log("onRewardedAdClosed: ADRewarded Placement '" + placement + "'");
+                    PBMobileAds.getInstance().log(LogType.INFOR, "onRewardedAdClosed: ADRewarded Placement '" + placement + "'");
                     if (adDelegate != null) adDelegate.onRewardedAdClosed();
                 }
 
                 @Override
                 public void onUserEarnedReward(@NonNull RewardItem reward) {
                     String dataReward = "Type: " + reward.getType() + " | Amount: " + reward.getAmount();
-                    PBMobileAds.getInstance().log("onUserEarnedReward: ADRewarded Placement '" + placement + "' with RewardItem - " + dataReward);
+                    PBMobileAds.getInstance().log(LogType.INFOR, "onUserEarnedReward: ADRewarded Placement '" + placement + "' with RewardItem - " + dataReward);
 
                     ADRewardItem rewardItem = new ADRewardItem(reward.getType(), reward.getAmount());
                     if (adDelegate != null) adDelegate.onUserEarnedReward(rewardItem);
@@ -210,17 +207,17 @@ public class ADRewarded {
                     super.onRewardedAdFailedToShow(errorCode);
 
                     String messErr = "onRewardedAdFailedToShow: ADRewarded Placement '" + placement + "' with error: " + PBMobileAds.getInstance().getAdRewardedError(errorCode);
-                    PBMobileAds.getInstance().log(messErr);
+                    PBMobileAds.getInstance().log(LogType.INFOR, messErr);
                     if (adDelegate != null) adDelegate.onRewardedAdFailedToShow(messErr);
                 }
             });
         } else {
-            PBMobileAds.getInstance().log("ADRewarded Placement '" + this.placement + "' currently unavailable, call preload() first.");
+            PBMobileAds.getInstance().log(LogType.INFOR, "ADRewarded Placement '" + this.placement + "' currently unavailable, call preload() first.");
         }
     }
 
     public void destroy() {
-        PBMobileAds.getInstance().log("Destroy ADRewarded Placement: " + this.placement);
+        PBMobileAds.getInstance().log(LogType.INFOR, "Destroy ADRewarded Placement: " + this.placement);
         this.resetAD();
     }
 

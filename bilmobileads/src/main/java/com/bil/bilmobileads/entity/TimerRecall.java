@@ -2,21 +2,20 @@ package com.bil.bilmobileads.entity;
 
 import android.os.CountDownTimer;
 
-import com.bil.bilmobileads.PBMobileAds;
-import com.bil.bilmobileads.interfaces.TimerCompleteListener;
+import com.bil.bilmobileads.interfaces.WorkCompleteDelegate;
 
 public class TimerRecall extends CountDownTimer {
 
-    private TimerCompleteListener listener;
+    private WorkCompleteDelegate listener;
 
     public TimerRecall(long millisInFuture, long countDownInterval) {
         super(millisInFuture, countDownInterval);
     }
 
-    public TimerRecall(long millisInFuture, long countDownInterval, TimerCompleteListener timerCompleteListener) {
+    public TimerRecall(long millisInFuture, long countDownInterval, WorkCompleteDelegate workCompleteDelegate) {
         super(millisInFuture, countDownInterval);
 
-        this.listener = timerCompleteListener;
+        this.listener = workCompleteDelegate;
     }
 
 
@@ -31,7 +30,7 @@ public class TimerRecall extends CountDownTimer {
         }
     }
 
-    public void setListener(TimerCompleteListener listener) {
+    public void setListener(WorkCompleteDelegate listener) {
         this.listener = listener;
     }
 }

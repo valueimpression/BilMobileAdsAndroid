@@ -36,7 +36,7 @@ class HttpApi<T> extends AsyncTask<Object, Void, DataResponse<T>> {
             httpCon.setRequestMethod("GET");
             httpCon.setRequestProperty("Content-Type", "application/json");
             httpCon.setRequestProperty("Accept", "application/json");
-            httpCon.setConnectTimeout(60000);
+            httpCon.setConnectTimeout(Constants.TIME_REQUEST_ADUNIT);
             httpCon.connect();
 
             int httpResult = httpCon.getResponseCode();
@@ -91,8 +91,6 @@ class HttpApi<T> extends AsyncTask<Object, Void, DataResponse<T>> {
     @Override
     protected void onPostExecute(DataResponse jsonObject) {
         super.onPostExecute(jsonObject);
-
-        PBMobileAds.getInstance().log(jsonObject.toString());
 
         if (jsonObject.error != null) {
             this.resultCallback.failure(jsonObject.error);

@@ -12,7 +12,7 @@ public class Utils {
     /**
      * Tag used for logging statements.
      */
-    public static final String LOGTAG = "Unity PBMobileAds";
+    public static final String LOGTAG = "uPBMobileAds";
 
     /**
      * Position constant for top of the screen.
