@@ -212,14 +212,13 @@ public class ADInterstitial {
             public void onAdFailedToLoad(int errorCode) {
                 super.onAdFailedToLoad(errorCode);
 
+                isFetchingAD = false;
                 if (errorCode == AdRequest.ERROR_CODE_NO_FILL) {
                     if (!processNoBids()) {
-                        isFetchingAD = false;
                         if (adDelegate != null)
                             adDelegate.onAdFailedToLoad("onAdFailedToLoad: ADInterstitial Placement '" + placement + "' with error: " + PBMobileAds.getInstance().getADError(errorCode));
                     }
                 } else {
-                    isFetchingAD = false;
                     String messErr = "onAdFailedToLoad: ADInterstitial Placement '" + placement + "' with error: " + PBMobileAds.getInstance().getADError(errorCode);
                     PBMobileAds.getInstance().log(LogType.INFOR, messErr);
                     if (adDelegate != null) adDelegate.onAdFailedToLoad(messErr);
