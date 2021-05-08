@@ -26,7 +26,7 @@ android {
 
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
-    implementation files('libs/prebid-mobile-sdk-core-1.6.jar')
+    implementation files('libs/PrebidMobile-1.10.jar')
 
     implementation 'com.google.android.gms:play-services-ads:18.2.0'
     implementation 'androidx.appcompat:appcompat:1.1.0'

@@ -91,6 +91,7 @@ public class ADRewarded {
         if (this.adUnit == null || this.amRewarded == null) return;
 
         this.isFetchingAD = false;
+        this.amRequest = null;
 
         this.adUnit.stopAutoRefresh();
         this.adUnit = null;

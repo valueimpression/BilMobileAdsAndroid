@@ -25,12 +25,13 @@
 ```gradle
     dependencies {
         implementation 'com.google.android.gms:play-services-ads:18.2.0'
-        implementation 'com.github.valueimpression:BilMobileAdsAndroid:1.4.2'
+        implementation 'com.github.valueimpression:BilMobileAdsAndroid:1.5'
     }
 ```
 ## Note: Proguard 
 Add this -keep directive to your apps' proguard-rules.pro:
 ```gradle
     -keep class com.bil.** { *; }
+    -keep class org.prebid.mobile.** { *; }
     -keep class com.google.android.gms.ads.** { *; }
 ```

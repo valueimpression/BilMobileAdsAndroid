@@ -9,7 +9,7 @@ import com.bil.bilmobileads.entity.ADFormat;
 import com.bil.bilmobileads.entity.AdInfor;
 import com.bil.bilmobileads.entity.AdUnitObj;
 import com.bil.bilmobileads.entity.LogType;
-import com.bil.bilmobileads.interfaces.AdNativeDelegate;
+import com.bil.bilmobileads.interfaces.AdDelegate;
 import com.bil.bilmobileads.interfaces.ResultCallback;
 import com.bil.bilmobileads.interfaces.WorkCompleteDelegate;
 import com.google.android.gms.ads.AdListener;
@@ -35,7 +35,7 @@ public class ADNativeStyle implements Application.ActivityLifecycleCallbacks {
 
     // MARK: - View
     private ViewGroup adView;
-    private AdNativeDelegate adDelegate;
+    private AdDelegate adDelegate;
 
     // MARK: - AD
     private PublisherAdRequest amRequest;
@@ -120,6 +120,7 @@ public class ADNativeStyle implements Application.ActivityLifecycleCallbacks {
 
         this.isFetchingAD = false;
         this.isLoadNativeSucc = false;
+        this.amRequest = null;
 
         this.adUnit.stopAutoRefresh();
         this.adUnit = null;
@@ -127,18 +128,6 @@ public class ADNativeStyle implements Application.ActivityLifecycleCallbacks {
         this.amNative.destroy();
         this.amNative.setAdListener(null);
         this.amNative = null;
-    }
-
-    void handlerResult(ResultCode resultCode) {
-        if (resultCode == ResultCode.SUCCESS) {
-            this.amNative.loadAd(this.amRequest);
-        } else {
-            if (resultCode == ResultCode.NO_BIDS) {
-                this.processNoBids();
-            } else if (resultCode == ResultCode.TIMEOUT) {
-                PBMobileAds.getInstance().log(LogType.INFOR, "ADNativeStyle Placement '" + this.placement + "' Timeout. Please check your internet connect.");
-            }
-        }
     }
 
     // MARK: - Public FUNC
@@ -209,11 +198,35 @@ public class ADNativeStyle implements Application.ActivityLifecycleCallbacks {
             }
 
             @Override
+            public void onAdOpened() {
+                super.onAdOpened();
+
+                PBMobileAds.getInstance().log(LogType.INFOR, "onAdOpened: ADNativeStyle Placement '" + placement + "'");
+                if (adDelegate != null) adDelegate.onAdOpened();
+            }
+
+            @Override
+            public void onAdClosed() {
+                super.onAdClosed();
+
+                PBMobileAds.getInstance().log(LogType.INFOR, "onAdClosed: ADNativeStyle Placement '" + placement + "'");
+                if (adDelegate != null) adDelegate.onAdClosed();
+            }
+
+            @Override
+            public void onAdClicked() {
+                super.onAdClicked();
+
+                PBMobileAds.getInstance().log(LogType.INFOR, "onAdClicked: ADNativeStyle Placement '" + placement + "'");
+                if (adDelegate != null) adDelegate.onAdClicked();
+            }
+
+            @Override
             public void onAdLeftApplication() {
                 super.onAdLeftApplication();
 
                 PBMobileAds.getInstance().log(LogType.INFOR, "onAdClicked: ADNativeStyle Placement '" + placement + "'");
-                if (adDelegate != null) adDelegate.onAdClicked();
+                if (adDelegate != null) adDelegate.onAdLeftApplication();
             }
 
             @Override
@@ -251,7 +264,15 @@ public class ADNativeStyle implements Application.ActivityLifecycleCallbacks {
             @Override
             public void onComplete(ResultCode resultCode) {
                 PBMobileAds.getInstance().log(LogType.DEBUG, "PBS demand fetch ADNativeStyle placement '" + placement + "' for DFP: " + resultCode.name());
-                handlerResult(resultCode);
+                if (resultCode == ResultCode.SUCCESS) {
+                    amNative.loadAd(amRequest);
+                } else {
+                    if (resultCode == ResultCode.NO_BIDS) {
+                        processNoBids();
+                    } else if (resultCode == ResultCode.TIMEOUT) {
+                        PBMobileAds.getInstance().log(LogType.INFOR, "ADNativeStyle Placement '" + placement + "' Timeout. Please check your internet connect.");
+                    }
+                }
             }
         });
     }
@@ -264,7 +285,7 @@ public class ADNativeStyle implements Application.ActivityLifecycleCallbacks {
         this.resetAD();
     }
 
-    public void setListener(AdNativeDelegate adDelegate) {
+    public void setListener(AdDelegate adDelegate) {
         this.adDelegate = adDelegate;
     }
 

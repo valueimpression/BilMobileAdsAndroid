@@ -99,26 +99,13 @@ public class ADInterstitial {
         if (this.adUnit == null || this.amInterstitial == null) return;
 
         this.isFetchingAD = false;
+        this.amRequest = null;
 
         this.adUnit.stopAutoRefresh();
         this.adUnit = null;
 
         this.amInterstitial.setAdListener(null);
         this.amInterstitial = null;
-    }
-
-    void handlerResult(ResultCode resultCode) {
-        if (resultCode == ResultCode.SUCCESS) {
-            this.amInterstitial.loadAd(this.amRequest);
-        } else {
-            this.isFetchingAD = false;
-
-            if (resultCode == ResultCode.NO_BIDS) {
-                this.processNoBids();
-            } else if (resultCode == ResultCode.TIMEOUT) {
-                PBMobileAds.getInstance().log(LogType.INFOR, "ADInterstitial Placement '" + this.placement + "' Timeout. Please check your internet connect.");
-            }
-        }
     }
 
     // MARK: - Public FUNC
@@ -237,7 +224,16 @@ public class ADInterstitial {
             @Override
             public void onComplete(ResultCode resultCode) {
                 PBMobileAds.getInstance().log(LogType.DEBUG, "PBS demand fetch ADInterstitial placement '" + placement + "' for DFP: " + resultCode.name());
-                handlerResult(resultCode);
+                if (resultCode == ResultCode.SUCCESS) {
+                    amInterstitial.loadAd(amRequest);
+                } else {
+                    isFetchingAD = false;
+                    if (resultCode == ResultCode.NO_BIDS) {
+                        processNoBids();
+                    } else if (resultCode == ResultCode.TIMEOUT) {
+                        PBMobileAds.getInstance().log(LogType.INFOR, "ADInterstitial Placement '" + placement + "' Timeout. Please check your internet connect.");
+                    }
+                }
             }
         });
     }

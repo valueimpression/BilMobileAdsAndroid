@@ -121,6 +121,7 @@ public class ADBanner implements Application.ActivityLifecycleCallbacks {
 
         this.isFetchingAD = false;
         this.isLoadBannerSucc = false;
+        this.amRequest = null;
 
         this.adUnit.stopAutoRefresh();
         this.adUnit = null;
@@ -128,21 +129,6 @@ public class ADBanner implements Application.ActivityLifecycleCallbacks {
         this.amBanner.destroy();
         this.amBanner.setAdListener(null);
         this.amBanner = null;
-    }
-
-    void handlerResult(ResultCode resultCode) {
-        if (resultCode == ResultCode.SUCCESS) {
-            this.amBanner.loadAd(this.amRequest);
-        } else {
-            this.isFetchingAD = false;
-            this.isLoadBannerSucc = false;
-
-            if (resultCode == ResultCode.NO_BIDS) {
-                this.processNoBids();
-            } else if (resultCode == ResultCode.TIMEOUT) {
-                PBMobileAds.getInstance().log(LogType.INFOR, "ADBanner Placement '" + this.placement + "' Timeout. Please check your internet connect.");
-            }
-        }
     }
 
     // MARK: - Public FUNC
@@ -299,7 +285,19 @@ public class ADBanner implements Application.ActivityLifecycleCallbacks {
             @Override
             public void onComplete(ResultCode resultCode) {
                 PBMobileAds.getInstance().log(LogType.DEBUG, "PBS demand fetch ADBanner placement '" + placement + "' for DFP: " + resultCode.name());
-                handlerResult(resultCode);
+
+                if (resultCode == ResultCode.SUCCESS) {
+                    amBanner.loadAd(amRequest);
+                } else {
+                    isFetchingAD = false;
+                    isLoadBannerSucc = false;
+
+                    if (resultCode == ResultCode.NO_BIDS) {
+                        processNoBids();
+                    } else if (resultCode == ResultCode.TIMEOUT) {
+                        PBMobileAds.getInstance().log(LogType.INFOR, "ADBanner Placement '" + placement + "' Timeout. Please check your internet connect.");
+                    }
+                }
             }
         });
     }

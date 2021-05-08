@@ -40,10 +40,12 @@ public class PBMobileAds {
     // MARK: List Config
     ArrayList<AdUnitObj> listAdUnitObj = new ArrayList<AdUnitObj>();
     // MARK: api
-    boolean isTestMode = false;
-    boolean gdprConfirm = false;
     private String pbServerEndPoint = "";
+    String nativeTemplateId = "";
+    boolean gdprConfirm = false;
+    boolean isTestMode = false;
     boolean isShowCMP = false;
+
     // LOG:
     private final boolean DEBUG_MODE = false;
 
@@ -94,6 +96,7 @@ public class PBMobileAds {
                     }
 
                     pbServerEndPoint = dataJSON.getString("pbServerEndPoint");
+                    nativeTemplateId = dataJSON.getString("nativeTemplateId");
                     gdprConfirm = dataJSON.getBoolean("gdprConfirm");
 
                     // Set all ad type config

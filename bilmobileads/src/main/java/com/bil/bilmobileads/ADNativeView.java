@@ -9,35 +9,52 @@ import android.widget.ImageView;
 import android.widget.RatingBar;
 import android.widget.TextView;
 
-import com.bil.bilmobileads.interfaces.AdNativeVideoDelegate;
+import com.bil.bilmobileads.interfaces.NativeAdVideoDelegate;
+import com.bil.bilmobileads.interfaces.NativeAdCustomDelegate;
 import com.google.android.gms.ads.VideoController;
 import com.google.android.gms.ads.formats.MediaView;
 import com.google.android.gms.ads.formats.UnifiedNativeAd;
 import com.google.android.gms.ads.formats.UnifiedNativeAdView;
 
+import org.prebid.mobile.PrebidNativeAd;
+import org.prebid.mobile.PrebidNativeAdEventListener;
+import org.prebid.mobile.Util;
+
 public final class ADNativeView {
 
-    private UnifiedNativeAd unifiedNativeAd;
-
-    ADNativeView(UnifiedNativeAd unifiedNativeAd) {
-        this.unifiedNativeAd = unifiedNativeAd;
+    ADNativeView() {
     }
 
     public static class Builder {
 
-        private UnifiedNativeAd nativeAd;
+        private String placement;
+        private View viewTemplate;
+
+        private PrebidNativeAd nativeAd;
+        private NativeAdCustomDelegate nativeAdDelegate;
+
+        private UnifiedNativeAd gadNativeAd;
         private UnifiedNativeAdView nativeAdView;
 
-        public Builder(UnifiedNativeAd nativeAd) {
+        public Builder(String placement, PrebidNativeAd nativeAd) {
+            this.placement = placement;
             this.nativeAd = nativeAd;
             this.nativeAdView = new UnifiedNativeAdView(PBMobileAds.getInstance().getContextApp());
         }
 
+        public Builder(String placement, UnifiedNativeAd gadNativeAd) {
+            this.placement = placement;
+            this.gadNativeAd = gadNativeAd;
+            this.nativeAdView = new UnifiedNativeAdView(PBMobileAds.getInstance().getContextApp());
+        }
+
         public ADNativeView.Builder setNativeView(View view) {
+            this.viewTemplate = view;
+
             TextView txtAd = new TextView(view.getContext());
             txtAd.setText("Ad");
             txtAd.setTextColor(Color.WHITE);
-            txtAd.setPadding(0,0,5,0);
+            txtAd.setPadding(0, 0, 5, 0);
             txtAd.setTypeface(Typeface.defaultFromStyle(Typeface.BOLD));
             txtAd.setBackgroundColor(Color.parseColor("#FFCD68"));
             txtAd.setLayoutParams(new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT));
@@ -47,99 +64,125 @@ public final class ADNativeView {
             return this;
         }
 
-        public ADNativeView.Builder setMediaView(FrameLayout frameLayout) {
-            MediaView mediaView = new MediaView(PBMobileAds.getInstance().getContextApp());
-            mediaView.setMediaContent(this.nativeAd.getMediaContent());
-
-            frameLayout.addView(mediaView);
-
-            this.nativeAdView.setMediaView(mediaView);
-
-            return this;
-        }
-
         public ADNativeView.Builder setHeadlineView(TextView headLine) {
-            if (this.nativeAd.getHeadline() == null) {
+            String headLineStr = this.isGAD() ? this.gadNativeAd.getHeadline() : this.nativeAd.getTitle();
+            if (headLineStr == null) {
                 headLine.setVisibility(View.INVISIBLE);
             } else {
                 headLine.setVisibility(View.VISIBLE);
-                headLine.setText(this.nativeAd.getHeadline());
+                headLine.setText(headLineStr);
             }
             return this;
         }
 
         public ADNativeView.Builder setBodyView(TextView txtBody) {
-            if (this.nativeAd.getBody() == null) {
+            String txtBodyStr = this.isGAD() ? this.gadNativeAd.getBody() : this.nativeAd.getDescription();
+            if (txtBodyStr == null) {
                 txtBody.setVisibility(View.INVISIBLE);
             } else {
                 txtBody.setVisibility(View.VISIBLE);
-                txtBody.setText(this.nativeAd.getBody());
+                txtBody.setText(txtBodyStr);
             }
             return this;
         }
 
         public ADNativeView.Builder setCallToActionView(Button btnAction) {
-            if (this.nativeAd.getCallToAction() == null) {
+            String btnActionStr = this.isGAD() ? this.gadNativeAd.getCallToAction() : this.nativeAd.getCallToAction();
+            if (btnActionStr == null) {
                 btnAction.setVisibility(View.INVISIBLE);
             } else {
                 btnAction.setVisibility(View.VISIBLE);
-                btnAction.setText(this.nativeAd.getCallToAction());
+                btnAction.setText(btnActionStr);
             }
             return this;
         }
 
         public ADNativeView.Builder setIconView(ImageView imgIcon) {
-            if (this.nativeAd.getIcon() == null) {
-                imgIcon.setVisibility(View.GONE);
+            if (this.isGAD()) {
+                if (this.gadNativeAd.getIcon() == null) {
+                    imgIcon.setVisibility(View.GONE);
+                } else {
+                    imgIcon.setVisibility(View.VISIBLE);
+                    imgIcon.setImageDrawable(this.gadNativeAd.getIcon().getDrawable());
+                }
             } else {
-                imgIcon.setVisibility(View.VISIBLE);
-                imgIcon.setImageDrawable(this.nativeAd.getIcon().getDrawable());
+                if (this.nativeAd.getIconUrl() == null) {
+                    imgIcon.setVisibility(View.GONE);
+                } else {
+                    imgIcon.setVisibility(View.VISIBLE);
+                    Util.loadImage(imgIcon, this.nativeAd.getIconUrl());
+                }
             }
             return this;
         }
 
-        public ADNativeView.Builder setPriceView(TextView txtprice) {
-            if (this.nativeAd.getPrice() == null) {
-                txtprice.setVisibility(View.INVISIBLE);
+        public ADNativeView.Builder setMediaView(FrameLayout frameLayout) {
+            if (this.isGAD()) {
+                MediaView mediaView = new MediaView(PBMobileAds.getInstance().getContextApp());
+                mediaView.setMediaContent(this.gadNativeAd.getMediaContent());
+                frameLayout.addView(mediaView);
+                this.nativeAdView.setMediaView(mediaView);
             } else {
-                txtprice.setVisibility(View.VISIBLE);
-                txtprice.setText(this.nativeAd.getPrice());
+                ImageView imageView = new ImageView(PBMobileAds.getInstance().getContextApp());
+                Util.loadImage(imageView, this.nativeAd.getImageUrl());
+                frameLayout.addView(imageView);
+            }
+            return this;
+        }
+
+        public ADNativeView.Builder setPriceView(TextView txtPrice) {
+            String txtPriceStr = this.isGAD() ? this.gadNativeAd.getPrice() : null;
+            if (txtPriceStr == null) {
+                txtPrice.setVisibility(View.INVISIBLE);
+            } else {
+                txtPrice.setVisibility(View.VISIBLE);
+                txtPrice.setText(txtPriceStr);
             }
             return this;
         }
 
         public ADNativeView.Builder setStarRatingView(RatingBar rateBar) {
-            if (this.nativeAd.getStarRating() == null) {
+            Double rateBarStr = this.isGAD() ? this.gadNativeAd.getStarRating() : null;
+            if (rateBarStr == null) {
                 rateBar.setVisibility(View.INVISIBLE);
             } else {
                 rateBar.setVisibility(View.VISIBLE);
-                rateBar.setRating(this.nativeAd.getStarRating().floatValue());
+                rateBar.setRating(rateBarStr.floatValue());
             }
             return this;
         }
 
         public ADNativeView.Builder setStoreView(TextView txtStore) {
-            if (this.nativeAd.getStore() == null) {
+            String txtStoreStr = this.isGAD() ? this.gadNativeAd.getStore() : null;
+            if (txtStoreStr == null) {
                 txtStore.setVisibility(View.INVISIBLE);
             } else {
                 txtStore.setVisibility(View.VISIBLE);
-                txtStore.setText(this.nativeAd.getStore());
+                txtStore.setText(txtStoreStr);
             }
             return this;
         }
 
         public ADNativeView.Builder setAdvertiserView(TextView txtAdvertiser) {
-            if (this.nativeAd.getAdvertiser() == null) {
+            String txtAdvertiserStr = this.isGAD() ? this.gadNativeAd.getAdvertiser() : this.nativeAd.getSponsoredBy();
+            if (txtAdvertiserStr == null) {
                 txtAdvertiser.setVisibility(View.INVISIBLE);
             } else {
                 txtAdvertiser.setVisibility(View.VISIBLE);
-                txtAdvertiser.setText(this.nativeAd.getAdvertiser());
+                txtAdvertiser.setText(txtAdvertiserStr);
             }
             return this;
         }
 
-        public ADNativeView.Builder setVideoListener(final AdNativeVideoDelegate videoDelegate) {
-            VideoController vc = this.nativeAd.getVideoController();
+        public ADNativeView.Builder setNativeAdDelegate(final NativeAdCustomDelegate nativeAdDelegate) {
+            this.nativeAdDelegate = nativeAdDelegate;
+            return this;
+        }
+
+        public ADNativeView.Builder setVideoListener(final NativeAdVideoDelegate videoDelegate) {
+            if (this.gadNativeAd == null) return this;
+
+            VideoController vc = this.gadNativeAd.getVideoController();
 
             // Updates the UI to say whether or not this ad has a video asset.
             if (vc.hasVideoContent()) {
@@ -189,20 +232,51 @@ public final class ADNativeView {
         }
 
         public FrameLayout build() {
-            this.nativeAdView.setNativeAd(this.nativeAd);
+            if (this.isGAD())
+                this.nativeAdView.setNativeAd(this.gadNativeAd);
+            else
+                this.nativeAd.registerView(this.viewTemplate, new PrebidNativeAdEventListener() {
+                    @Override
+                    public void onAdExpired() {
+                        if (nativeAdDelegate != null)
+                            nativeAdDelegate.onNativeAdDidExpire("ADNativeCustom Placement " + placement + " did record Expire");
+                    }
+
+                    @Override
+                    public void onAdClicked() {
+                        if (nativeAdDelegate != null)
+                            nativeAdDelegate.onNativeAdDidRecordClick("ADNativeCustom Placement " + placement + " did record Click");
+                    }
+
+                    @Override
+                    public void onAdImpression() {
+                        if (nativeAdDelegate != null)
+                            nativeAdDelegate.onNativeAdDidRecordImpression("ADNativeCustom Placement " + placement + " did record Impression");
+                    }
+                });
+
             return this.nativeAdView;
         }
 
-        private void destroy() {
+        private boolean isGAD() {
+            return this.gadNativeAd != null;
+        }
+
+        public void destroy() {
+            this.placement = null;
             if (this.nativeAd != null) {
-                this.nativeAd.destroy();
                 this.nativeAd = null;
+            }
+            if (this.gadNativeAd != null) {
+                this.gadNativeAd.destroy();
+                this.gadNativeAd = null;
             }
             if (this.nativeAdView != null) {
                 this.nativeAdView.removeAllViews();
                 this.nativeAdView.destroy();
                 this.nativeAdView = null;
             }
+            if (this.viewTemplate != null) this.viewTemplate = null;
         }
     }
 }

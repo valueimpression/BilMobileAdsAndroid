@@ -21,4 +21,5 @@
 #-renamesourcefileattribute SourceFile
 
 -keep class com.bil.** { *; }
+-keep class org.prebid.mobile.** { *; }
 -keep class com.google.android.gms.ads.** { *; }

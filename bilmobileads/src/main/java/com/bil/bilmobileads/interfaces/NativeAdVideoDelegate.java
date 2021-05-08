@@ -1,6 +1,6 @@
 package com.bil.bilmobileads.interfaces;
 
-public class AdNativeVideoDelegate {
+public class NativeAdVideoDelegate {
 
     public void onVideoStart() {
     }
