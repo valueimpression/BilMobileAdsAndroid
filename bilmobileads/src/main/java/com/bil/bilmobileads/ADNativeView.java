@@ -2,6 +2,7 @@ package com.bil.bilmobileads;
 
 import android.graphics.Color;
 import android.graphics.Typeface;
+import android.net.Uri;
 import android.view.View;
 import android.widget.Button;
 import android.widget.FrameLayout;
@@ -12,9 +13,12 @@ import android.widget.TextView;
 import com.bil.bilmobileads.interfaces.NativeAdVideoDelegate;
 import com.bil.bilmobileads.interfaces.NativeAdCustomDelegate;
 import com.google.android.gms.ads.VideoController;
-import com.google.android.gms.ads.formats.MediaView;
-import com.google.android.gms.ads.formats.UnifiedNativeAd;
-import com.google.android.gms.ads.formats.UnifiedNativeAdView;
+//import com.google.android.gms.ads.formats.MediaView;
+//import com.google.android.gms.ads.formats.UnifiedNativeAd;
+import com.google.android.gms.ads.nativead.MediaView;
+import com.google.android.gms.ads.nativead.NativeAd;
+import com.google.android.gms.ads.nativead.NativeAdView;
+//import com.google.android.gms.ads.formats.UnifiedNativeAdView;
 
 import org.prebid.mobile.PrebidNativeAd;
 import org.prebid.mobile.PrebidNativeAdEventListener;
@@ -33,19 +37,19 @@ public final class ADNativeView {
         private PrebidNativeAd nativeAd;
         private NativeAdCustomDelegate nativeAdDelegate;
 
-        private UnifiedNativeAd gadNativeAd;
-        private UnifiedNativeAdView nativeAdView;
+        private NativeAd gadNativeAd;
+        private NativeAdView nativeAdView;
 
         public Builder(String placement, PrebidNativeAd nativeAd) {
             this.placement = placement;
             this.nativeAd = nativeAd;
-            this.nativeAdView = new UnifiedNativeAdView(PBMobileAds.getInstance().getContextApp());
+            this.nativeAdView = new NativeAdView(PBMobileAds.getInstance().getContextApp());
         }
 
-        public Builder(String placement, UnifiedNativeAd gadNativeAd) {
+        public Builder(String placement, NativeAd gadNativeAd) {
             this.placement = placement;
             this.gadNativeAd = gadNativeAd;
-            this.nativeAdView = new UnifiedNativeAdView(PBMobileAds.getInstance().getContextApp());
+            this.nativeAdView = new NativeAdView(PBMobileAds.getInstance().getContextApp());
         }
 
         public ADNativeView.Builder setNativeView(View view) {
@@ -110,7 +114,8 @@ public final class ADNativeView {
                     imgIcon.setVisibility(View.GONE);
                 } else {
                     imgIcon.setVisibility(View.VISIBLE);
-                    Util.loadImage(imgIcon, this.nativeAd.getIconUrl());
+                    imgIcon.setImageURI(Uri.parse(this.nativeAd.getIconUrl()));
+//                    Util.loadImage(imgIcon, this.nativeAd.getIconUrl());
                 }
             }
             return this;
@@ -124,7 +129,8 @@ public final class ADNativeView {
                 this.nativeAdView.setMediaView(mediaView);
             } else {
                 ImageView imageView = new ImageView(PBMobileAds.getInstance().getContextApp());
-                Util.loadImage(imageView, this.nativeAd.getImageUrl());
+                imageView.setImageURI(Uri.parse(this.nativeAd.getImageUrl()));
+//                Util.loadImage(imageView, this.nativeAd.getImageUrl());
                 frameLayout.addView(imageView);
             }
             return this;
@@ -182,7 +188,7 @@ public final class ADNativeView {
         public ADNativeView.Builder setVideoListener(final NativeAdVideoDelegate videoDelegate) {
             if (this.gadNativeAd == null) return this;
 
-            VideoController vc = this.gadNativeAd.getVideoController();
+            VideoController vc = this.gadNativeAd.getMediaContent().getVideoController();
 
             // Updates the UI to say whether or not this ad has a video asset.
             if (vc.hasVideoContent()) {

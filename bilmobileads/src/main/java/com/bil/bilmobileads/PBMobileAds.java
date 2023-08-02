@@ -6,6 +6,8 @@ import android.os.Build;
 import android.util.Log;
 import android.webkit.WebView;
 
+import androidx.annotation.NonNull;
+
 import com.bil.bilmobileads.entity.ADFormat;
 import com.bil.bilmobileads.entity.ADType;
 import com.bil.bilmobileads.entity.AdInfor;
@@ -20,7 +22,7 @@ import com.consentmanager.sdk.callbacks.OnCloseCallback;
 import com.consentmanager.sdk.model.CMPConfig;
 import com.consentmanager.sdk.storage.CMPStorageConsentManager;
 import com.google.android.gms.ads.AdRequest;
-import com.google.android.gms.ads.rewarded.RewardedAdCallback;
+//import com.google.android.gms.ads.rewarded.RewardedAdCallback;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -28,6 +30,8 @@ import org.json.JSONObject;
 import org.prebid.mobile.Host;
 import org.prebid.mobile.PrebidMobile;
 import org.prebid.mobile.TargetingParams;
+import org.prebid.mobile.api.data.InitializationStatus;
+import org.prebid.mobile.rendering.listeners.SdkInitializationListener;
 
 import java.util.ArrayList;
 
@@ -66,18 +70,18 @@ public class PBMobileAds {
         this.isTestMode = testMode;
 
         // Declare in init to the user agent could be passed in first call
+        PrebidMobile.initializeSdk(context, new SdkInitializationListener() {
+            @Override
+            public void onInitializationComplete(@NonNull InitializationStatus status) {
+                PBMobileAds.getInstance().log(LogType.INFOR, "PBMobileAds Init");
+            }
+        });
         PrebidMobile.setShareGeoLocation(true);
-        PrebidMobile.setApplicationContext(context.getApplicationContext());
+//        PrebidMobile.setApplicationContext(context.getApplicationContext());
 
-        this.log(LogType.INFOR, "PBMobileAds Init");
-        this.log(LogType.DEBUG, "PBMobileAds Init Webview With SDK: " + Build.VERSION.SDK_INT);
-        if (Build.VERSION.SDK_INT > 21) {
-            WebView webView = new WebView(context);
-            webView.clearCache(true);
-        } else {
-            WebView webView = new WebView(context.getApplicationContext());
-            webView.clearCache(true);
-        }
+        this.log(LogType.DEBUG, "Webview With SDK: " + Build.VERSION.SDK_INT);
+        WebView webView = new WebView(Build.VERSION.SDK_INT > 21 ? context : context.getApplicationContext());
+        webView.clearCache(true);
     }
 
     // MARK: - Call API AD
@@ -285,25 +289,25 @@ public class PBMobileAds {
         return messErr;
     }
 
-    String getAdRewardedError(int errorCode) {
-        String messErr = "";
-        switch (errorCode) {
-            case RewardedAdCallback.ERROR_CODE_INTERNAL_ERROR:
-                messErr = "ERROR_CODE_INTERNAL_ERROR";
-                break;
-            case RewardedAdCallback.ERROR_CODE_AD_REUSED:
-                messErr = "ERROR_CODE_AD_REUSED";
-                break;
-            case RewardedAdCallback.ERROR_CODE_NOT_READY:
-                messErr = "ERROR_CODE_NOT_READY";
-                break;
-            case RewardedAdCallback.ERROR_CODE_APP_NOT_FOREGROUND:
-                messErr = "ERROR_CODE_APP_NOT_FOREGROUND";
-                break;
-        }
-
-        return messErr;
-    }
+//    String getAdRewardedError(int errorCode) {
+//        String messErr = "";
+//        switch (errorCode) {
+//            case RewardedAdCallback.ERROR_CODE_INTERNAL_ERROR:
+//                messErr = "ERROR_CODE_INTERNAL_ERROR";
+//                break;
+//            case RewardedAdCallback.ERROR_CODE_AD_REUSED:
+//                messErr = "ERROR_CODE_AD_REUSED";
+//                break;
+//            case RewardedAdCallback.ERROR_CODE_NOT_READY:
+//                messErr = "ERROR_CODE_NOT_READY";
+//                break;
+//            case RewardedAdCallback.ERROR_CODE_APP_NOT_FOREGROUND:
+//                messErr = "ERROR_CODE_APP_NOT_FOREGROUND";
+//                break;
+//        }
+//
+//        return messErr;
+//    }
 
     ADType getAdType(String type) {
         switch (type) {

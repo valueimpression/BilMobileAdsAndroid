@@ -1,23 +1,24 @@
 apply plugin: 'com.android.library'
-apply plugin: 'com.github.dcendents.android-maven'
-group='com.github.valueimpression'
+apply plugin: 'maven-publish'
+//apply plugin: 'com.github.dcendents.android-maven'
+//group = 'com.github.valueimpression'
 
 android {
-    compileSdkVersion 29
-    buildToolsVersion "29.0.3"
+    setCompileSdk(32)
+    setBuildToolsVersion("30.0.3")
 
     defaultConfig {
         minSdkVersion 19
-        targetSdkVersion 29
+        targetSdkVersion 32
     }
 
     buildTypes {
         release {
-            minifyEnabled true
+//            minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
         debug {
-            minifyEnabled true
+//            minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
@@ -25,11 +26,27 @@ android {
 }
 
 dependencies {
-    implementation fileTree(include: ['*.jar'], dir: 'libs')
-    implementation files('libs/PrebidMobile-1.10.jar')
+//    implementation fileTree(include: ['*.jar', '*.aar'], dir: 'libs')
 
-    implementation 'com.google.android.gms:play-services-ads:18.2.0'
+    implementation 'org.prebid:prebid-mobile-sdk:2.1.1'
+    implementation 'com.google.android.gms:play-services-ads:22.2.0'
+
     implementation 'androidx.appcompat:appcompat:1.1.0'
+    implementation 'org.jetbrains:annotations:15.0'
 
     testImplementation 'junit:junit:4.12'
+}
+
+publishing {
+    publications {
+        release(MavenPublication) {
+            groupId = 'com.github.valueimpression'
+            artifactId = 'BilMobileAdsAndroid'
+            version = '1.9.0'
+
+            afterEvaluate {
+                from components.release
+            }
+        }
+    }
 }

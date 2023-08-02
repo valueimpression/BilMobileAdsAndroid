@@ -15,8 +15,11 @@ import com.bil.bilmobileads.interfaces.WorkCompleteDelegate;
 import com.google.android.gms.ads.AdListener;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdSize;
-import com.google.android.gms.ads.doubleclick.PublisherAdRequest;
-import com.google.android.gms.ads.doubleclick.PublisherAdView;
+import com.google.android.gms.ads.LoadAdError;
+import com.google.android.gms.ads.admanager.AdManagerAdRequest;
+import com.google.android.gms.ads.admanager.AdManagerAdView;
+//import com.google.android.gms.ads.doubleclick.PublisherAdRequest;
+//import com.google.android.gms.ads.doubleclick.PublisherAdView;
 
 import org.prebid.mobile.NativeAdUnit;
 import org.prebid.mobile.NativeDataAsset;
@@ -38,9 +41,11 @@ public class ADNativeStyle implements Application.ActivityLifecycleCallbacks {
     private AdDelegate adDelegate;
 
     // MARK: - AD
-    private PublisherAdRequest amRequest;
+//    private PublisherAdRequest amRequest;
+    private AdManagerAdRequest amRequest;
     private NativeAdUnit adUnit;
-    private PublisherAdView amNative;
+    //    private PublisherAdView amNative;
+    private AdManagerAdView amNative;
     // MARK: - AD Info
     private String placement;
     private AdUnitObj adUnitObj;
@@ -183,7 +188,7 @@ public class ADNativeStyle implements Application.ActivityLifecycleCallbacks {
         setupNativeAsset();
 
         // Create AdView
-        this.amNative = new PublisherAdView(PBMobileAds.getInstance().getContextApp());
+        this.amNative = new AdManagerAdView(PBMobileAds.getInstance().getContextApp());
         this.amNative.setAdUnitId(adInfor.adUnitID);
         this.amNative.setAdSizes(AdSize.FLUID);
         this.amNative.setAdListener(new AdListener() {
@@ -222,18 +227,13 @@ public class ADNativeStyle implements Application.ActivityLifecycleCallbacks {
             }
 
             @Override
-            public void onAdLeftApplication() {
-                super.onAdLeftApplication();
-
-                PBMobileAds.getInstance().log(LogType.INFOR, "onAdClicked: ADNativeStyle Placement '" + placement + "'");
-                if (adDelegate != null) adDelegate.onAdLeftApplication();
-            }
-
-            @Override
-            public void onAdFailedToLoad(int errorCode) {
-                super.onAdFailedToLoad(errorCode);
+//            public void onAdFailedToLoad(int errorCode) {
+//                super.onAdFailedToLoad(errorCode);
+            public void onAdFailedToLoad(@NonNull LoadAdError loadAdError) {
+                super.onAdFailedToLoad(loadAdError);
                 isLoadNativeSucc = false;
 
+                int errorCode = loadAdError.getCode();
                 if (errorCode == AdRequest.ERROR_CODE_NO_FILL) {
                     if (!processNoBids()) {
                         isFetchingAD = false;
@@ -255,23 +255,20 @@ public class ADNativeStyle implements Application.ActivityLifecycleCallbacks {
 
         // Create Request PBS
         this.isFetchingAD = true;
-        final PublisherAdRequest.Builder builder = new PublisherAdRequest.Builder();
-        if (PBMobileAds.getInstance().isTestMode) {
-            builder.addTestDevice(Constants.DEVICE_ID_TEST);
-        }
-        this.amRequest = builder.build();
-        this.adUnit.fetchDemand(this.amRequest, new OnCompleteListener() {
-            @Override
-            public void onComplete(ResultCode resultCode) {
-                PBMobileAds.getInstance().log(LogType.DEBUG, "PBS demand fetch ADNativeStyle placement '" + placement + "' for DFP: " + resultCode.name());
-                if (resultCode == ResultCode.SUCCESS) {
-                    amNative.loadAd(amRequest);
-                } else {
-                    if (resultCode == ResultCode.NO_BIDS) {
-                        processNoBids();
-                    } else if (resultCode == ResultCode.TIMEOUT) {
-                        PBMobileAds.getInstance().log(LogType.INFOR, "ADNativeStyle Placement '" + placement + "' Timeout. Please check your internet connect.");
-                    }
+//        final PublisherAdRequest.Builder builder = new PublisherAdRequest.Builder();
+//        if (PBMobileAds.getInstance().isTestMode) {
+//            builder.addTestDevice(Constants.DEVICE_ID_TEST);
+//        }
+        this.amRequest = new AdManagerAdRequest.Builder().build();
+        this.adUnit.fetchDemand(this.amRequest, resultCode -> {
+            PBMobileAds.getInstance().log(LogType.INFOR, "PBS demand fetch ADNativeStyle placement '" + placement + "' for DFP: " + resultCode.name());
+            if (resultCode == ResultCode.SUCCESS) {
+                amNative.loadAd(amRequest);
+            } else {
+                if (resultCode == ResultCode.NO_BIDS) {
+                    processNoBids();
+                } else if (resultCode == ResultCode.TIMEOUT) {
+                    PBMobileAds.getInstance().log(LogType.INFOR, "ADNativeStyle Placement '" + placement + "' Timeout. Please check your internet connect.");
                 }
             }
         });
@@ -313,7 +310,8 @@ public class ADNativeStyle implements Application.ActivityLifecycleCallbacks {
 
     public void stopFetchData() {
         if (this.adUnit == null) return;
-        this.adUnit.setAutoRefreshPeriodMillis(600000 * 1000);
+//        this.adUnit.setAutoRefreshPeriodMillis(600000 * 1000);
+//        this.adUnit.setAutoRefreshInterval();
     }
 
     // MARK: - Private FUNC

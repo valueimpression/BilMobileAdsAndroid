@@ -11,8 +11,11 @@ import com.bil.bilmobileads.interfaces.WorkCompleteDelegate;
 import com.google.android.gms.ads.AdListener;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdSize;
-import com.google.android.gms.ads.doubleclick.PublisherAdRequest;
-import com.google.android.gms.ads.doubleclick.PublisherAdView;
+import com.google.android.gms.ads.LoadAdError;
+import com.google.android.gms.ads.admanager.AdManagerAdRequest;
+import com.google.android.gms.ads.admanager.AdManagerAdView;
+//import com.google.android.gms.ads.doubleclick.PublisherAdRequest;
+//import com.google.android.gms.ads.doubleclick.PublisherAdView;
 
 import com.bil.bilmobileads.entity.ADFormat;
 import com.bil.bilmobileads.entity.AdInfor;
@@ -38,9 +41,11 @@ public class ADBanner implements Application.ActivityLifecycleCallbacks {
     private AdDelegate adDelegate;
 
     // MARK: - AD
-    private PublisherAdRequest amRequest;
+    //    private PublisherAdRequest amRequest;
+    private AdManagerAdRequest amRequest;
     private AdUnit adUnit;
-    private PublisherAdView amBanner;
+    //    private PublisherAdView amBanner;
+    private AdManagerAdView amBanner;
     // MARK: - AD Info
     private String placement;
     private AdUnitObj adUnitObj;
@@ -192,7 +197,8 @@ public class ADBanner implements Application.ActivityLifecycleCallbacks {
         // Set auto refresh time | refreshTime default: sec
         this.startFetchData();
 
-        this.amBanner = new PublisherAdView(PBMobileAds.getInstance().getContextApp());
+//        this.amBanner = new PublisherAdView(PBMobileAds.getInstance().getContextApp());
+        this.amBanner = new AdManagerAdView(PBMobileAds.getInstance().getContextApp());
         this.amBanner.setAdUnitId(adInfor.adUnitID);
         this.amBanner.setAdSizes(this.curBannerSize);
         this.amBanner.setAdListener(new AdListener() {
@@ -242,19 +248,22 @@ public class ADBanner implements Application.ActivityLifecycleCallbacks {
                 if (adDelegate != null) adDelegate.onAdClicked();
             }
 
-            @Override
-            public void onAdLeftApplication() {
-                super.onAdLeftApplication();
+//            @Override
+//            public void onAdLeftApplication() {
+//                super.onAdLeftApplication();
+//
+//                PBMobileAds.getInstance().log(LogType.INFOR, "onAdLeftApplication: ADBanner Placement '" + placement + "'");
+//                if (adDelegate != null) adDelegate.onAdLeftApplication();
+//            }
 
-                PBMobileAds.getInstance().log(LogType.INFOR, "onAdLeftApplication: ADBanner Placement '" + placement + "'");
-                if (adDelegate != null) adDelegate.onAdLeftApplication();
-            }
-
             @Override
-            public void onAdFailedToLoad(int errorCode) {
-                super.onAdFailedToLoad(errorCode);
+//            public void onAdFailedToLoad(int errorCode) {
+//                super.onAdFailedToLoad(errorCode);
+            public void onAdFailedToLoad(@NonNull LoadAdError loadAdError) {
+                super.onAdFailedToLoad(loadAdError);
                 isLoadBannerSucc = false;
 
+                int errorCode = loadAdError.getCode();
                 if (errorCode == AdRequest.ERROR_CODE_NO_FILL) {
                     if (!processNoBids()) {
                         isFetchingAD = false;
@@ -276,10 +285,11 @@ public class ADBanner implements Application.ActivityLifecycleCallbacks {
 
         // Create Request PBS
         this.isFetchingAD = true;
-        final PublisherAdRequest.Builder builder = new PublisherAdRequest.Builder();
-        if (PBMobileAds.getInstance().isTestMode) {
-            builder.addTestDevice(Constants.DEVICE_ID_TEST);
-        }
+//        final PublisherAdRequest.Builder builder = new PublisherAdRequest.Builder();
+        final AdManagerAdRequest.Builder builder = new AdManagerAdRequest.Builder();
+//        if (PBMobileAds.getInstance().isTestMode) {
+//            builder.addTestDevice(Constants.DEVICE_ID_TEST);
+//        }
         this.amRequest = builder.build();
         this.adUnit.fetchDemand(this.amRequest, new OnCompleteListener() {
             @Override
@@ -342,12 +352,14 @@ public class ADBanner implements Application.ActivityLifecycleCallbacks {
         if (this.adUnit == null) return;
         if (this.adUnitObj.refreshTime > 0) {
             this.adUnit.setAutoRefreshPeriodMillis(this.adUnitObj.refreshTime * 1000); // convert sec to milisec
+//            this.adUnit.setAutoRefreshInterval(this.adUnitObj.refreshTime); // convert sec to milisec
         }
     }
 
     public void stopFetchData() {
         if (this.adUnit == null) return;
-        this.adUnit.setAutoRefreshPeriodMillis(600000 * 1000);
+//        this.adUnit.setAutoRefreshPeriodMillis(600000 * 1000);
+//        this.adUnit.setAutoRefreshInterval(600000 * 1000);
     }
 
     // MARK: - Private FUNC
