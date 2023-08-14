@@ -1,5 +1,7 @@
 package com.bil.bilmobileads;
 
+import static com.google.android.gms.common.util.CollectionUtils.listOf;
+
 import android.app.Activity;
 import android.app.Application;
 import android.os.Bundle;
@@ -25,9 +27,12 @@ import com.bil.bilmobileads.interfaces.AdDelegate;
 
 import org.prebid.mobile.AdUnit;
 import org.prebid.mobile.BannerAdUnit;
+import org.prebid.mobile.BannerParameters;
 import org.prebid.mobile.OnCompleteListener;
 import org.prebid.mobile.ResultCode;
+import org.prebid.mobile.Signals;
 import org.prebid.mobile.VideoAdUnit;
+import org.prebid.mobile.VideoParameters;
 import org.prebid.mobile.addendum.AdViewUtils;
 import org.prebid.mobile.addendum.PbFindSizeError;
 
@@ -43,7 +48,8 @@ public class ADBanner implements Application.ActivityLifecycleCallbacks {
     // MARK: - AD
     //    private PublisherAdRequest amRequest;
     private AdManagerAdRequest amRequest;
-    private AdUnit adUnit;
+    //    private AdUnit adUnit;
+    private BannerAdUnit adUnit;
     //    private PublisherAdView amBanner;
     private AdManagerAdView amBanner;
     // MARK: - AD Info
@@ -186,13 +192,19 @@ public class ADBanner implements Application.ActivityLifecycleCallbacks {
 
         PBMobileAds.getInstance().log(LogType.INFOR, "Load ADBanner Placement: " + this.placement);
         PBMobileAds.getInstance().setupPBS(adInfor.host);
-        if (isVideo) {
-            PBMobileAds.getInstance().log(LogType.DEBUG, "[ADBanner Video] - configID: " + adInfor.configId + " | adUnitID: " + adInfor.adUnitID);
-            this.adUnit = new VideoAdUnit(adInfor.configId, w, h);
-        } else {
-            PBMobileAds.getInstance().log(LogType.DEBUG, "[ADBanner HTML] - configID: " + adInfor.configId + " | adUnitID: " + adInfor.adUnitID);
-            this.adUnit = new BannerAdUnit(adInfor.configId, w, h);
-        }
+
+        PBMobileAds.getInstance().log(LogType.DEBUG, "[ADBanner] - configID: " + adInfor.configId + " | adUnitID: " + adInfor.adUnitID);
+        this.adUnit = new BannerAdUnit(adInfor.configId, w, h);
+
+        BannerParameters parameters = new BannerParameters();
+        parameters.setApi(listOf(Signals.Api.MRAID_3, Signals.Api.OMID_1));
+        this.adUnit.setBannerParameters(parameters);
+        VideoParameters videoParameters = new VideoParameters(listOf("video/x-flv", "video/mp4"));
+//        videoParameters.setPlacement(Signals.Placement.InBanner);
+//        videoParameters.setApi(listOf(Signals.Api.VPAID_1, Signals.Api.VPAID_2));
+//        videoParameters.setProtocols(listOf(Signals.Protocols.VAST_2_0));
+//        videoParameters.setPlaybackMethod(listOf(Signals.PlaybackMethod.AutoPlaySoundOn));
+        this.adUnit.setVideoParameters(videoParameters);
 
         // Set auto refresh time | refreshTime default: sec
         this.startFetchData();
@@ -248,17 +260,7 @@ public class ADBanner implements Application.ActivityLifecycleCallbacks {
                 if (adDelegate != null) adDelegate.onAdClicked();
             }
 
-//            @Override
-//            public void onAdLeftApplication() {
-//                super.onAdLeftApplication();
-//
-//                PBMobileAds.getInstance().log(LogType.INFOR, "onAdLeftApplication: ADBanner Placement '" + placement + "'");
-//                if (adDelegate != null) adDelegate.onAdLeftApplication();
-//            }
-
             @Override
-//            public void onAdFailedToLoad(int errorCode) {
-//                super.onAdFailedToLoad(errorCode);
             public void onAdFailedToLoad(@NonNull LoadAdError loadAdError) {
                 super.onAdFailedToLoad(loadAdError);
                 isLoadBannerSucc = false;
@@ -285,28 +287,26 @@ public class ADBanner implements Application.ActivityLifecycleCallbacks {
 
         // Create Request PBS
         this.isFetchingAD = true;
-//        final PublisherAdRequest.Builder builder = new PublisherAdRequest.Builder();
         final AdManagerAdRequest.Builder builder = new AdManagerAdRequest.Builder();
 //        if (PBMobileAds.getInstance().isTestMode) {
 //            builder.addTestDevice(Constants.DEVICE_ID_TEST);
 //        }
         this.amRequest = builder.build();
-        this.adUnit.fetchDemand(this.amRequest, new OnCompleteListener() {
-            @Override
-            public void onComplete(ResultCode resultCode) {
-                PBMobileAds.getInstance().log(LogType.DEBUG, "PBS demand fetch ADBanner placement '" + placement + "' for DFP: " + resultCode.name());
+        this.adUnit.fetchDemand(this.amRequest, resultCode -> {
+            PBMobileAds.getInstance().log(LogType.DEBUG, "PBS demand fetch ADBanner placement '" + placement + "' for DFP: " + resultCode.name());
 
-                if (resultCode == ResultCode.SUCCESS) {
-                    amBanner.loadAd(amRequest);
+            if (resultCode == ResultCode.SUCCESS) {
+                amBanner.loadAd(amRequest);
+            } else {
+                isFetchingAD = false;
+                isLoadBannerSucc = false;
+
+                if (resultCode == ResultCode.NO_BIDS) {
+                    processNoBids();
+                } else if (resultCode == ResultCode.TIMEOUT) {
+                    PBMobileAds.getInstance().log(LogType.INFOR, "ADBanner Placement '" + placement + "' Timeout. Please check your internet connect.");
                 } else {
-                    isFetchingAD = false;
-                    isLoadBannerSucc = false;
-
-                    if (resultCode == ResultCode.NO_BIDS) {
-                        processNoBids();
-                    } else if (resultCode == ResultCode.TIMEOUT) {
-                        PBMobileAds.getInstance().log(LogType.INFOR, "ADBanner Placement '" + placement + "' Timeout. Please check your internet connect.");
-                    }
+                    PBMobileAds.getInstance().log(LogType.INFOR, "ADBanner Placement '" + placement + "' No Ads. Something went wrong");
                 }
             }
         });
@@ -351,7 +351,9 @@ public class ADBanner implements Application.ActivityLifecycleCallbacks {
     public void startFetchData() {
         if (this.adUnit == null) return;
         if (this.adUnitObj.refreshTime > 0) {
-            this.adUnit.setAutoRefreshPeriodMillis(this.adUnitObj.refreshTime * 1000); // convert sec to milisec
+//            int time = this.adUnitObj.refreshTime <= 120 ? this.adUnitObj.refreshTime : 120;
+            this.adUnit.setAutoRefreshInterval(Math.max(this.adUnitObj.refreshTime, 120));
+//            this.adUnit.setAutoRefreshPeriodMillis(this.adUnitObj.refreshTime); // convert sec to milisec
 //            this.adUnit.setAutoRefreshInterval(this.adUnitObj.refreshTime); // convert sec to milisec
         }
     }
@@ -360,6 +362,7 @@ public class ADBanner implements Application.ActivityLifecycleCallbacks {
         if (this.adUnit == null) return;
 //        this.adUnit.setAutoRefreshPeriodMillis(600000 * 1000);
 //        this.adUnit.setAutoRefreshInterval(600000 * 1000);
+        this.adUnit.setAutoRefreshInterval(600);
     }
 
     // MARK: - Private FUNC

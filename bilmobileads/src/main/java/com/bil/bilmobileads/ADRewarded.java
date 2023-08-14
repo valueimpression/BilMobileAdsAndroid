@@ -199,14 +199,14 @@ public class ADRewarded {
             public void onAdClicked() {
                 super.onAdClicked();
 
-                PBMobileAds.getInstance().log(LogType.INFOR, "onAdClicked: ADInterstitial Placement '" + placement + "'");
+                PBMobileAds.getInstance().log(LogType.INFOR, "onAdClicked: ADRewarded Placement '" + placement + "'");
             }
 
             @Override
             public void onAdImpression() {
                 super.onAdImpression();
 
-                PBMobileAds.getInstance().log(LogType.INFOR, "onAdImpression: ADInterstitial Placement '" + placement + "'");
+                PBMobileAds.getInstance().log(LogType.INFOR, "onAdImpression: ADRewarded Placement '" + placement + "'");
                 if (adDelegate != null) adDelegate.onRewardedAdOpened();
             }
 
@@ -215,7 +215,7 @@ public class ADRewarded {
                 super.onAdDismissedFullScreenContent();
                 amRewarded = null;
 
-                PBMobileAds.getInstance().log(LogType.INFOR, "onAdDismissedFullScreenContent: ADInterstitial Placement '" + placement + "'");
+                PBMobileAds.getInstance().log(LogType.INFOR, "onAdDismissedFullScreenContent: ADRewarded Placement '" + placement + "'");
                 if (adDelegate != null) adDelegate.onRewardedAdClosed();
             }
 
@@ -224,14 +224,14 @@ public class ADRewarded {
                 super.onAdFailedToShowFullScreenContent(adError);
                 amRewarded = null;
 
-                PBMobileAds.getInstance().log(LogType.INFOR, "onAdFailedToShowFullScreenContent: ADInterstitial Placement '" + placement + "' | " + adError.getMessage());
+                PBMobileAds.getInstance().log(LogType.INFOR, "onAdFailedToShowFullScreenContent: ADRewarded Placement '" + placement + "' | " + adError.getMessage());
                 if (adDelegate != null) adDelegate.onRewardedAdFailedToLoad(adError.getMessage());
             }
 
             @Override
             public void onAdShowedFullScreenContent() {
                 super.onAdShowedFullScreenContent();
-                PBMobileAds.getInstance().log(LogType.INFOR, "onAdShowedFullScreenContent: ADInterstitial Placement '" + placement + "'");
+                PBMobileAds.getInstance().log(LogType.INFOR, "onAdShowedFullScreenContent: ADRewarded Placement '" + placement + "'");
             }
         });
     }

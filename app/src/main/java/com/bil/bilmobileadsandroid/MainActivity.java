@@ -46,13 +46,14 @@ public class MainActivity extends AppCompatActivity {
 
         final FrameLayout bannerView = findViewById(R.id.bannerView);
 
-        this.adBanner = new ADBanner(bannerView, "1001");
-        this.adBanner.load();
+//        this.adBanner = new ADBanner(bannerView, "eea66d76-c12c-446b-a9b0-bdb2f39e0dac");
+//        this.adBanner.load();
 
-        this.adInterstitial = new ADInterstitial("1002");
+        this.adInterstitial = new ADInterstitial("6e02e904-0306-4efe-90eb-3538ae4b4fc0");
         this.adInterstitial.preLoad();
 
-//        this.adRewarded = new ADRewarded(this, "1003");
+//        this.adRewarded = new ADRewarded(this, "c88d4022-7a09-4f3b-ad83-797ca8a2021b");
+//        this.adRewarded.preLoad();
 
 //        this.adNativeStyle = new ADNativeStyle(bannerView, "1004");
 //        this.adNativeStyle.load();
