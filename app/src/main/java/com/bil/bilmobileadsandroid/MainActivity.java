@@ -2,6 +2,7 @@ package com.bil.bilmobileadsandroid;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.app.Activity;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -11,6 +12,7 @@ import android.widget.ImageView;
 import android.widget.RatingBar;
 import android.widget.TextView;
 
+import com.bil.bilmobileads.ADAppOpen;
 import com.bil.bilmobileads.ADBanner;
 import com.bil.bilmobileads.ADInterstitial;
 import com.bil.bilmobileads.ADNativeCustom;
@@ -19,6 +21,7 @@ import com.bil.bilmobileads.ADNativeView;
 import com.bil.bilmobileads.ADRewarded;
 import com.bil.bilmobileads.PBMobileAds;
 import com.bil.bilmobileads.entity.LogType;
+import com.bil.bilmobileads.interfaces.AdDelegate;
 import com.bil.bilmobileads.interfaces.NativeAdCustomDelegate;
 import com.bil.bilmobileads.interfaces.NativeAdVideoDelegate;
 import com.bil.bilmobileads.interfaces.NativeAdLoaderCustomDelegate;
@@ -27,13 +30,15 @@ import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
 
+    Activity curActivity;
+
     ADBanner adBanner;
     ADNativeStyle adNativeStyle;
     ADNativeCustom adNativeCustom;
     ADInterstitial adInterstitial;
     ADRewarded adRewarded;
 
-    ADBanner adBanner1;
+    ADAppOpen adAppOpen;
 
     ArrayList<ADNativeView.Builder> builderArrayList = new ArrayList<>();
     ADNativeView.Builder builderView;
@@ -46,17 +51,16 @@ public class MainActivity extends AppCompatActivity {
 
         final FrameLayout bannerView = findViewById(R.id.bannerView);
 
-//        this.adBanner = new ADBanner(bannerView, "eea66d76-c12c-446b-a9b0-bdb2f39e0dac");
-//        this.adBanner.load();
+//        this.curActivity = this;
+//        this.adAppOpen = new ADAppOpen(this, "1005");
 
-        this.adInterstitial = new ADInterstitial("6e02e904-0306-4efe-90eb-3538ae4b4fc0");
-        this.adInterstitial.preLoad();
+//        this.adBanner = new ADBanner(bannerView, "1001");
 
-//        this.adRewarded = new ADRewarded(this, "c88d4022-7a09-4f3b-ad83-797ca8a2021b");
-//        this.adRewarded.preLoad();
+//        this.adInterstitial = new ADInterstitial("1002");
+
+//        this.adRewarded = new ADRewarded(this, "1003");
 
 //        this.adNativeStyle = new ADNativeStyle(bannerView, "1004");
-//        this.adNativeStyle.load();
 
 //        this.adNativeCustom = new ADNativeCustom("1004");
 //        this.adNativeCustom.setListener(new NativeAdLoaderCustomDelegate() {
@@ -80,6 +84,7 @@ public class MainActivity extends AppCompatActivity {
 //                adNativeCustom.preload();
                 if (adInterstitial != null) adInterstitial.preLoad();
                 if (adRewarded != null) adRewarded.preLoad();
+                if (adAppOpen != null) adAppOpen.preLoad(curActivity);
 //                if (adBanner != null)  adBanner.destroy();
             }
         });
@@ -90,6 +95,7 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View view) {
                 if (adInterstitial != null) adInterstitial.show();
                 if (adRewarded != null) adRewarded.show();
+                if (adAppOpen != null) adAppOpen.show(curActivity);
 //                if (adBanner != null) adBanner.load();
 
 //                if (builderArrayList.size() <= 0) {

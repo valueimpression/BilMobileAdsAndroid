@@ -120,14 +120,14 @@ public class ADRewarded {
         this.resetAD();
 
         // Check Active
-        if (!this.adUnitObj.isActive || this.adUnitObj.adInfor.size() <= 0) {
+        if (!this.adUnitObj.isActive || this.adUnitObj.adInfor.size() == 0) {
             PBMobileAds.getInstance().log(LogType.INFOR, "ADRewarded Placement '" + this.placement + "' is not active or not exist.");
             return;
         }
 
         // Check AdInfor
-        boolean isVideo = this.adUnitObj.defaultFormat == ADFormat.VAST;
-        final AdInfor adInfor = PBMobileAds.getInstance().getAdInfor(isVideo, this.adUnitObj);
+//        boolean isVideo = this.adUnitObj.defaultFormat == ADFormat.VAST;
+        final AdInfor adInfor = this.adUnitObj.adInfor.get(0); // PBMobileAds.getInstance().getAdInfor(isVideo, this.adUnitObj);
         if (adInfor == null) {
             PBMobileAds.getInstance().log(LogType.INFOR, "AdInfor of ADRewarded Placement '" + this.placement + "' is not exist.");
             return;
@@ -140,53 +140,51 @@ public class ADRewarded {
 
         // Create Request PBS
         this.isFetchingAD = true;
-//        if (PBMobileAds.getInstance().isTestMode) {
-//            builder.addTestDevice(Constants.DEVICE_ID_TEST);
-//        }
         this.amRequest = new AdManagerAdRequest.Builder().build();
         this.adUnit.fetchDemand(this.amRequest, new OnCompleteListener() {
             @Override
             public void onComplete(ResultCode resultCode) {
                 PBMobileAds.getInstance().log(LogType.INFOR, "PBS demand fetch ADRewarded placement '" + placement + "' for DFP: " + resultCode.name());
-                if (resultCode == ResultCode.SUCCESS) {
-                    RewardedAd.load(
-                            activityAd,
-                            adInfor.adUnitID,
-                            amRequest,
-                            new RewardedAdLoadCallback() {
-                                @Override
-                                public void onAdLoaded(@NonNull RewardedAd rewardedAd) {
-                                    super.onAdLoaded(rewardedAd);
 
-                                    isFetchingAD = false;
-                                    amRewarded = rewardedAd;
-                                    setAdsListener();
+                RewardedAd.load(
+                        activityAd,
+                        adInfor.adUnitID,
+                        amRequest,
+                        new RewardedAdLoadCallback() {
+                            @Override
+                            public void onAdLoaded(@NonNull RewardedAd rewardedAd) {
+                                super.onAdLoaded(rewardedAd);
 
-                                    PBMobileAds.getInstance().log(LogType.INFOR, "onRewardedAdLoaded: ADRewarded Placement '" + placement + "' Loaded Success");
-                                    if (adDelegate != null) adDelegate.onRewardedAdLoaded();
-                                }
+                                isFetchingAD = false;
+                                amRewarded = rewardedAd;
+                                setAdsListener();
 
-                                @Override
-                                public void onAdFailedToLoad(@NonNull LoadAdError loadAdError) {
-                                    super.onAdFailedToLoad(loadAdError);
-
-                                    isFetchingAD = false;
-                                    amRewarded = null;
-                                    String messErr = "onRewardedAdFailedToLoad: ADRewarded Placement '" + placement + "' failed: " + loadAdError.getMessage(); // + PBMobileAds.getInstance().getAdRewardedError(errorCode);
-                                    PBMobileAds.getInstance().log(LogType.INFOR, messErr);
-                                    if (adDelegate != null)
-                                        adDelegate.onRewardedAdFailedToLoad(messErr);
-                                }
+                                PBMobileAds.getInstance().log(LogType.INFOR, "onRewardedAdLoaded: ADRewarded Placement '" + placement + "' Loaded Success");
+                                if (adDelegate != null) adDelegate.onRewardedAdLoaded();
                             }
-                    );
-                } else {
-                    isFetchingAD = false;
-                    if (resultCode == ResultCode.NO_BIDS) {
-                        PBMobileAds.getInstance().log(LogType.INFOR, "ADRewarded Placement '" + placement + "' No Bids.");
-                    } else if (resultCode == ResultCode.TIMEOUT) {
-                        PBMobileAds.getInstance().log(LogType.INFOR, "ADRewarded Placement '" + placement + "' Timeout. Please check your internet connect.");
-                    }
-                }
+
+                            @Override
+                            public void onAdFailedToLoad(@NonNull LoadAdError loadAdError) {
+                                super.onAdFailedToLoad(loadAdError);
+
+                                isFetchingAD = false;
+                                amRewarded = null;
+                                String messErr = "onRewardedAdFailedToLoad: ADRewarded Placement '" + placement + "' failed: " + loadAdError.getMessage(); // + PBMobileAds.getInstance().getAdRewardedError(errorCode);
+                                PBMobileAds.getInstance().log(LogType.INFOR, messErr);
+                                if (adDelegate != null)
+                                    adDelegate.onRewardedAdFailedToLoad(messErr);
+                            }
+                        }
+                );
+//                if (resultCode == ResultCode.SUCCESS) {
+//                } else {
+//                    isFetchingAD = false;
+//                    if (resultCode == ResultCode.NO_BIDS) {
+//                        PBMobileAds.getInstance().log(LogType.INFOR, "ADRewarded Placement '" + placement + "' No Bids.");
+//                    } else if (resultCode == ResultCode.TIMEOUT) {
+//                        PBMobileAds.getInstance().log(LogType.INFOR, "ADRewarded Placement '" + placement + "' Timeout. Please check your internet connect.");
+//                    }
+//                }
             }
         });
     }
@@ -246,7 +244,7 @@ public class ADRewarded {
                 if (adDelegate != null) adDelegate.onUserEarnedReward(rewardItem);
             });
         } else {
-            PBMobileAds.getInstance().log(LogType.INFOR, "ADRewarded Placement '" + this.placement + "' currently unavailable, call preload() first.");
+            PBMobileAds.getInstance().log(LogType.INFOR, "ADRewarded Placement '" + this.placement + "' currently unavailable, call preLoad() first.");
         }
     }
 
