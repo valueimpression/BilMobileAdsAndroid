@@ -42,7 +42,7 @@ public class ADAppOpen {
             throw new NullPointerException();
         }
 
-        MobileAds.initialize(context, (OnInitializationCompleteListener) initializationStatus -> {
+        MobileAds.initialize(context, initializationStatus -> {
         });
 
         PBMobileAds.getInstance().log(LogType.INFOR, "ADAppOpen placement: " + placementStr + " Init");
@@ -93,6 +93,8 @@ public class ADAppOpen {
             PBMobileAds.getInstance().log(LogType.INFOR, "AdInfor of ADInterstitial Placement '" + this.placement + "' is not exist.");
             return;
         }
+
+        PBMobileAds.getInstance().log(LogType.INFOR, "ADAppOpen Placement '" + this.placement + "' call preload ads.");
 
         isLoadingAd = true;
         AdRequest request = new AdRequest.Builder().build();
