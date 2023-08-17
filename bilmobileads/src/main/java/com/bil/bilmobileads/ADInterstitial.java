@@ -181,7 +181,7 @@ public class ADInterstitial {
 
         PBMobileAds.getInstance().log(LogType.DEBUG, "[ADInterstitial] - configId: " + adInfor.configId + " | adUnitID: " + adInfor.adUnitID);
         this.adUnit = new InterstitialAdUnit(adInfor.configId, EnumSet.of(AdUnitFormat.BANNER, AdUnitFormat.VIDEO));
-        this.adUnit.setMinSizePercentage(80, 60);
+//        this.adUnit.setMinSizePercentage(80, 60);
 
         VideoParameters videoParameters = new VideoParameters(listOf("video/x-flv", "video/mp4"));
         videoParameters.setPlacement(Signals.Placement.Interstitial);

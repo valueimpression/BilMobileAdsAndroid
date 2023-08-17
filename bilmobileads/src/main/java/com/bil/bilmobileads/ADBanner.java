@@ -209,7 +209,6 @@ public class ADBanner implements Application.ActivityLifecycleCallbacks {
         // Set auto refresh time | refreshTime default: sec
         this.startFetchData();
 
-//        this.amBanner = new PublisherAdView(PBMobileAds.getInstance().getContextApp());
         this.amBanner = new AdManagerAdView(PBMobileAds.getInstance().getContextApp());
         this.amBanner.setAdUnitId(adInfor.adUnitID);
         this.amBanner.setAdSizes(this.curBannerSize);
@@ -355,18 +354,17 @@ public class ADBanner implements Application.ActivityLifecycleCallbacks {
     public void startFetchData() {
         if (this.adUnit == null) return;
         if (this.adUnitObj.refreshTime > 0) {
-//            int time = this.adUnitObj.refreshTime <= 120 ? this.adUnitObj.refreshTime : 120;
-            this.adUnit.setAutoRefreshInterval(Math.max(this.adUnitObj.refreshTime, 120));
+            int time = this.adUnitObj.refreshTime < 120 ? this.adUnitObj.refreshTime : 120;
+            this.adUnit.setAutoRefreshInterval(time);
 //            this.adUnit.setAutoRefreshPeriodMillis(this.adUnitObj.refreshTime); // convert sec to milisec
-//            this.adUnit.setAutoRefreshInterval(this.adUnitObj.refreshTime); // convert sec to milisec
         }
     }
 
     public void stopFetchData() {
         if (this.adUnit == null) return;
+        this.adUnit.stopAutoRefresh();
 //        this.adUnit.setAutoRefreshPeriodMillis(600000 * 1000);
 //        this.adUnit.setAutoRefreshInterval(600000 * 1000);
-        this.adUnit.setAutoRefreshInterval(600);
     }
 
     // MARK: - Private FUNC

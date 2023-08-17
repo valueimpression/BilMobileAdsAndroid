@@ -3,6 +3,8 @@ package com.bil.bilmobileads;
 import android.app.Activity;
 import android.app.Application;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.ViewGroup;
 
 import com.bil.bilmobileads.entity.ADFormat;
@@ -49,10 +51,10 @@ public class ADNativeStyle implements Application.ActivityLifecycleCallbacks {
     private AdUnitObj adUnitObj;
 
     // MARK: - Properties
-    private ADFormat adFormatDefault;
+    private final Handler handler = new Handler(Looper.getMainLooper());
+    private Runnable runnable;
 
     private boolean isLoadNativeSucc = false;
-    private boolean setDefaultBidType = true;
     private boolean isFetchingAD = false;
 
     public ADNativeStyle(ViewGroup adView, final String placementStr) {
@@ -102,25 +104,15 @@ public class ADNativeStyle implements Application.ActivityLifecycleCallbacks {
         }
     }
 
-    boolean processNoBids() {
-        if (this.adUnitObj.adInfor.size() >= 2 && this.adFormatDefault == this.adUnitObj.defaultFormat) {
-            this.setDefaultBidType = false;
-            this.load();
-
-            return true;
-        } else {
-            // Both or .video, .html is no bids -> wait and preload.
-            PBMobileAds.getInstance().log(LogType.INFOR, "ADNativeStyle Placement '" + this.placement + "' No Bids.");
-            return false;
-        }
-    }
-
     void resetAD() {
         if (this.adUnit == null || this.amNative == null) return;
 
         this.isFetchingAD = false;
         this.isLoadNativeSucc = false;
         this.amRequest = null;
+
+        this.handler.removeCallbacks(this.runnable);
+        this.runnable = null;
 
         this.adUnit.stopAutoRefresh();
         this.adUnit = null;
@@ -132,7 +124,7 @@ public class ADNativeStyle implements Application.ActivityLifecycleCallbacks {
 
     // MARK: - Public FUNC
     public void load() {
-        PBMobileAds.getInstance().log(LogType.DEBUG, "ADNativeStyle Placement '" + this.placement + "' - isLoaded: " + this.isLoaded() + " | isFetchingAD: " + this.isFetchingAD);
+        PBMobileAds.getInstance().log(LogType.INFOR, "ADNativeStyle Placement '" + this.placement + "' - isLoaded: " + this.isLoaded() + " | isFetchingAD: " + this.isFetchingAD);
         if (this.adView == null) {
             PBMobileAds.getInstance().log(LogType.ERROR, "ADNativeStyle placement: " + this.placement + ", AdView Placeholder is null.");
             return;
@@ -154,15 +146,7 @@ public class ADNativeStyle implements Application.ActivityLifecycleCallbacks {
             return;
         }
 
-//        // Check and Set Default
-//        this.adFormatDefault = this.adUnitObj.defaultFormat;
-//        if (!this.setDefaultBidType && this.adUnitObj.adInfor.size() >= 2) {
-//            this.adFormatDefault = this.adFormatDefault == ADFormat.VAST ? ADFormat.HTML : ADFormat.VAST;
-//            this.setDefaultBidType = true;
-//        }
-
         // Get AdInfor
-//        boolean isVideo = this.adFormatDefault == ADFormat.VAST;
         AdInfor adInfor = this.adUnitObj.adInfor.get(0); // PBMobileAds.getInstance().getAdInfor(isVideo, this.adUnitObj);
         if (adInfor == null) {
             PBMobileAds.getInstance().log(LogType.INFOR, "AdInfor of ADNativeStyle Placement '" + this.placement + "' is not exist.");
@@ -172,13 +156,11 @@ public class ADNativeStyle implements Application.ActivityLifecycleCallbacks {
         PBMobileAds.getInstance().log(LogType.INFOR, "Load ADNativeStyle Placement: " + this.placement);
         PBMobileAds.getInstance().setupPBS(adInfor.host);
         PBMobileAds.getInstance().log(LogType.DEBUG, "[ADNativeStyle] - configID: " + adInfor.configId + " | adUnitID: " + adInfor.adUnitID);
+
         this.adUnit = new NativeAdUnit(adInfor.configId);
         this.adUnit.setContextType(NativeAdUnit.CONTEXT_TYPE.SOCIAL_CENTRIC);
         this.adUnit.setPlacementType(NativeAdUnit.PLACEMENTTYPE.CONTENT_FEED);
         this.adUnit.setContextSubType(NativeAdUnit.CONTEXTSUBTYPE.GENERAL_SOCIAL);
-
-        // Set auto refresh time | refreshTime is -> sec
-        this.startFetchData();
 
         setupNativeAsset();
 
@@ -191,6 +173,7 @@ public class ADNativeStyle implements Application.ActivityLifecycleCallbacks {
             public void onAdLoaded() {
                 super.onAdLoaded();
 
+                startFetchData();
                 isFetchingAD = false;
                 isLoadNativeSucc = true;
                 PBMobileAds.getInstance().log(LogType.INFOR, "onAdLoaded: ADNativeStyle Placement '" + placement + "'");
@@ -224,25 +207,14 @@ public class ADNativeStyle implements Application.ActivityLifecycleCallbacks {
             @Override
             public void onAdFailedToLoad(@NonNull LoadAdError loadAdError) {
                 super.onAdFailedToLoad(loadAdError);
+
+                startFetchData();
                 isLoadNativeSucc = false;
                 isFetchingAD = false;
                 int errorCode = loadAdError.getCode();
                 String messErr = "onAdFailedToLoad: ADNativeStyle Placement '" + placement + "' with error: " + PBMobileAds.getInstance().getADError(errorCode);
                 PBMobileAds.getInstance().log(LogType.INFOR, messErr);
                 if (adDelegate != null) adDelegate.onAdFailedToLoad(messErr);
-
-//                if (errorCode == AdRequest.ERROR_CODE_NO_FILL) {
-//                    if (!processNoBids()) {
-//                        isFetchingAD = false;
-//                        if (adDelegate != null)
-//                            adDelegate.onAdFailedToLoad("onAdFailedToLoad: ADNativeStyle Placement '" + placement + "' with error: " + PBMobileAds.getInstance().getADError(errorCode));
-//                    }
-//                } else {
-//                    isFetchingAD = false;
-//                    String messErr = "onAdFailedToLoad: ADNativeStyle Placement '" + placement + "' with error: " + PBMobileAds.getInstance().getADError(errorCode);
-//                    PBMobileAds.getInstance().log(LogType.INFOR, messErr);
-//                    if (adDelegate != null) adDelegate.onAdFailedToLoad(messErr);
-//                }
             }
         });
 
@@ -256,15 +228,6 @@ public class ADNativeStyle implements Application.ActivityLifecycleCallbacks {
         this.adUnit.fetchDemand(this.amRequest, resultCode -> {
             PBMobileAds.getInstance().log(LogType.INFOR, "PBS demand fetch ADNativeStyle placement '" + placement + "' for DFP: " + resultCode.name());
             amNative.loadAd(amRequest);
-//            if (resultCode == ResultCode.SUCCESS) {
-//                amNative.loadAd(amRequest);
-//            } else {
-//                if (resultCode == ResultCode.NO_BIDS) {
-//                    processNoBids();
-//                } else if (resultCode == ResultCode.TIMEOUT) {
-//                    PBMobileAds.getInstance().log(LogType.INFOR, "ADNativeStyle Placement '" + placement + "' Timeout. Please check your internet connect.");
-//                }
-//            }
         });
     }
 
@@ -295,15 +258,25 @@ public class ADNativeStyle implements Application.ActivityLifecycleCallbacks {
     }
 
     public void startFetchData() {
-        if (this.adUnit == null) return;
+        if (this.adUnit == null || this.runnable != null) return;
 
         if (this.adUnitObj.refreshTime > 0) {
-            this.adUnit.setAutoRefreshPeriodMillis(this.adUnitObj.refreshTime * 1000); // convert sec to milisec
+            int time = this.adUnitObj.refreshTime < 120 ? this.adUnitObj.refreshTime : 120;
+//            this.adUnit.setAutoRefreshInterval(time);
+//            this.adUnit.setAutoRefreshPeriodMillis(this.adUnitObj.refreshTime * 1000); // convert sec to milisec
+            this.runnable = () -> {
+                // Repeat this runnable after a specified interval
+                isLoadNativeSucc = false;
+                load();
+            };
+            // Start the timer
+            handler.postDelayed(this.runnable, time * 1000); // 1000 milliseconds (1 second)
         }
     }
 
     public void stopFetchData() {
         if (this.adUnit == null) return;
+        this.adUnit.stopAutoRefresh();
 //        this.adUnit.setAutoRefreshPeriodMillis(600000 * 1000);
 //        this.adUnit.setAutoRefreshInterval();
     }
