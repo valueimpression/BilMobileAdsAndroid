@@ -4,6 +4,9 @@ import com.bil.bilmobileads.entity.ADRewardItem;
 
 public class AdRewardedDelegate {
 
+    public void onRewardedAdClicked() {
+    }
+
     public void onRewardedAdLoaded() {
     }
 

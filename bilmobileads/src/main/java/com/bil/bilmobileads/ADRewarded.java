@@ -1,7 +1,6 @@
 package com.bil.bilmobileads;
 
 import android.app.Activity;
-import android.util.Log;
 
 import com.bil.bilmobileads.entity.ADRewardItem;
 import com.bil.bilmobileads.entity.LogType;
@@ -10,14 +9,9 @@ import com.bil.bilmobileads.interfaces.WorkCompleteDelegate;
 import com.google.android.gms.ads.AdError;
 import com.google.android.gms.ads.FullScreenContentCallback;
 import com.google.android.gms.ads.LoadAdError;
-import com.google.android.gms.ads.OnUserEarnedRewardListener;
 import com.google.android.gms.ads.admanager.AdManagerAdRequest;
-//import com.google.android.gms.ads.doubleclick.PublisherAdRequest;
-import com.google.android.gms.ads.rewarded.RewardItem;
 import com.google.android.gms.ads.rewarded.RewardedAd;
-//import com.google.android.gms.ads.rewarded.RewardedAdCallback;
 import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback;
-import com.bil.bilmobileads.entity.ADFormat;
 import com.bil.bilmobileads.entity.AdInfor;
 import com.bil.bilmobileads.entity.AdUnitObj;
 import com.bil.bilmobileads.interfaces.AdRewardedDelegate;
@@ -28,7 +22,6 @@ import org.prebid.mobile.AdUnit;
 import org.prebid.mobile.OnCompleteListener;
 import org.prebid.mobile.ResultCode;
 import org.prebid.mobile.RewardedVideoAdUnit;
-import org.prebid.mobile.api.rendering.RewardedAdUnit;
 
 public class ADRewarded {
 
@@ -37,7 +30,6 @@ public class ADRewarded {
     private AdRewardedDelegate adDelegate;
 
     // MARK: - AD
-//    private PublisherAdRequest amRequest;
     private AdManagerAdRequest amRequest;
     private AdUnit adUnit;
     private RewardedAd amRewarded;
@@ -126,7 +118,6 @@ public class ADRewarded {
         }
 
         // Check AdInfor
-//        boolean isVideo = this.adUnitObj.defaultFormat == ADFormat.VAST;
         final AdInfor adInfor = this.adUnitObj.adInfor.get(0); // PBMobileAds.getInstance().getAdInfor(isVideo, this.adUnitObj);
         if (adInfor == null) {
             PBMobileAds.getInstance().log(LogType.INFOR, "AdInfor of ADRewarded Placement '" + this.placement + "' is not exist.");
@@ -176,15 +167,6 @@ public class ADRewarded {
                             }
                         }
                 );
-//                if (resultCode == ResultCode.SUCCESS) {
-//                } else {
-//                    isFetchingAD = false;
-//                    if (resultCode == ResultCode.NO_BIDS) {
-//                        PBMobileAds.getInstance().log(LogType.INFOR, "ADRewarded Placement '" + placement + "' No Bids.");
-//                    } else if (resultCode == ResultCode.TIMEOUT) {
-//                        PBMobileAds.getInstance().log(LogType.INFOR, "ADRewarded Placement '" + placement + "' Timeout. Please check your internet connect.");
-//                    }
-//                }
             }
         });
     }
@@ -198,6 +180,7 @@ public class ADRewarded {
                 super.onAdClicked();
 
                 PBMobileAds.getInstance().log(LogType.INFOR, "onAdClicked: ADRewarded Placement '" + placement + "'");
+                if (adDelegate != null) adDelegate.onRewardedAdClicked();
             }
 
             @Override
