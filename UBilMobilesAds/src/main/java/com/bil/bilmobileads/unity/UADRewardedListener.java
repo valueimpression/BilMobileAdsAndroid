@@ -8,7 +8,7 @@ public interface UADRewardedListener {
 
     void onAdClosed();
 
-    void onUserEarnedReward(String type, double amount);
+    void onUserEarnedReward(); // String type, double amount
 
     void onAdFailedToLoad(String errorReason);
 

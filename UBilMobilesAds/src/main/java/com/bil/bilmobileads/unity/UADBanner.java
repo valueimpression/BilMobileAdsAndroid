@@ -113,7 +113,7 @@ public class UADBanner {
                         .getRootView()
                         .addOnLayoutChangeListener(viewChangeListener);
 
-                banner = new ADBanner(adPlaceholder, adUnitId);
+                banner = new ADBanner(unityActivity, adPlaceholder, adUnitId);
                 banner.setListener(new AdDelegate() {
                     @Override
                     public void onAdLoaded() {

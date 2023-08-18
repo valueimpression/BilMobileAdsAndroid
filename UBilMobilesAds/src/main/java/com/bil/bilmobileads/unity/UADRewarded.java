@@ -95,13 +95,13 @@ public class UADRewarded {
                     }
 
                     @Override
-                    public void onUserEarnedReward(final ADRewardItem adRewardItem) {
+                    public void onUserEarnedReward() { // final ADRewardItem adRewardItem
                         if (adListener != null) {
                             new Thread(new Runnable() {
                                 @Override
                                 public void run() {
                                     if (adListener != null) {
-                                        adListener.onUserEarnedReward(adRewardItem.getType(), adRewardItem.getAmount());
+                                        adListener.onUserEarnedReward(); // adRewardItem.getType(), adRewardItem.getAmount()
                                     }
                                 }
                             }).start();

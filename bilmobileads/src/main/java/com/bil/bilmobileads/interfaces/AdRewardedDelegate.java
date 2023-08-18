@@ -16,7 +16,7 @@ public class AdRewardedDelegate {
     public void onRewardedAdClosed() {
     }
 
-    public void onUserEarnedReward(ADRewardItem rewardItem) {
+    public void onUserEarnedReward() { // ADRewardItem rewardItem
     }
 
     public void onRewardedAdFailedToLoad(String error) {
