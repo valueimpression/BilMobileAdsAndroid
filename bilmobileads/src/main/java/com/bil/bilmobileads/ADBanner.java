@@ -6,7 +6,9 @@ import android.app.Activity;
 import android.app.Application;
 import android.content.Context;
 import android.os.Bundle;
+import android.view.Gravity;
 import android.view.ViewGroup;
+import android.widget.FrameLayout;
 
 import com.bil.bilmobileads.entity.LogType;
 import com.bil.bilmobileads.interfaces.ResultCallback;
@@ -319,9 +321,18 @@ public class ADBanner implements Application.ActivityLifecycleCallbacks {
                 }
             });
 
-            this.adView.removeAllViews();
-            this.adView.addView(bannerView);
+            // Create layout parameters for the FrameLayout
+            FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(
+                    FrameLayout.LayoutParams.WRAP_CONTENT, // Width
+                    FrameLayout.LayoutParams.WRAP_CONTENT  // Height
+            );
+            layoutParams.gravity = Gravity.CENTER;
+            this.bannerView.setLayoutParams(layoutParams);
 
+            this.adView.removeAllViews();
+            this.adView.addView(this.bannerView);
+
+            this.isFetchingAD = true;
             this.bannerView.loadAd();
         }
     }
