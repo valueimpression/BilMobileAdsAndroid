@@ -36,16 +36,18 @@ public class ADAppOpen {
 
     private long loadTime = 0;
 
+    private String logSuffix = "[ADAppOpen] ";
+
     public ADAppOpen(Context context, String placementStr) {
         if (placementStr == null) {
-            PBMobileAds.getInstance().log(LogType.ERROR, "Placement is null");
+            PBMobileAds.getInstance().log(LogType.ERROR, logSuffix + "placement is null");
             throw new NullPointerException();
         }
 
         MobileAds.initialize(context, initializationStatus -> {
         });
 
-        PBMobileAds.getInstance().log(LogType.INFOR, "ADAppOpen placement: " + placementStr + " Init");
+        PBMobileAds.getInstance().log(LogType.INFOR, logSuffix + "placement: " + placementStr + " Init");
         this.placement = placementStr;
         this.getConfigAD(context);
     }
@@ -59,7 +61,7 @@ public class ADAppOpen {
             PBMobileAds.getInstance().getADConfig(this.placement, new ResultCallback<AdUnitObj, Exception>() {
                 @Override
                 public void success(AdUnitObj data) {
-                    PBMobileAds.getInstance().log(LogType.INFOR, "ADAppOpen placement: " + placement + " Init Success");
+                    PBMobileAds.getInstance().log(LogType.INFOR, logSuffix + "placement: " + placement + " Init Success");
                     isFetchingAD = false;
                     adUnitObj = data;
                     PBMobileAds.getInstance().showCMP(() -> preLoad(context));
@@ -67,7 +69,7 @@ public class ADAppOpen {
 
                 @Override
                 public void failure(Exception error) {
-                    PBMobileAds.getInstance().log(LogType.INFOR, "ADInterstitial placement: " + placement + " Init Failed with Error: " + error.getLocalizedMessage() + ". Please check your internet connect.");
+                    PBMobileAds.getInstance().log(LogType.INFOR, logSuffix + "placement: " + placement + " Init Failed with Error: " + error.getLocalizedMessage() + ". Please check your internet connect.");
                     isFetchingAD = false;
                 }
             });
@@ -84,17 +86,17 @@ public class ADAppOpen {
         this.resetAD();
 
         if (!this.adUnitObj.isActive || this.adUnitObj.adInfor.size() == 0) {
-            PBMobileAds.getInstance().log(LogType.INFOR, "ADAppOpen Placement '" + this.placement + "' is not active or not exist.");
+            PBMobileAds.getInstance().log(LogType.INFOR, logSuffix + "placement '" + this.placement + "' is not active or not exist.");
             return;
         }
 
         final AdInfor adInfor = this.adUnitObj.adInfor.get(0); // PBMobileAds.getInstance().getAdInfor(true, this.adUnitObj);
         if (adInfor == null) {
-            PBMobileAds.getInstance().log(LogType.INFOR, "AdInfor of ADInterstitial Placement '" + this.placement + "' is not exist.");
+            PBMobileAds.getInstance().log(LogType.INFOR, logSuffix + "AdInfor of placement '" + this.placement + "' is not exist.");
             return;
         }
 
-        PBMobileAds.getInstance().log(LogType.INFOR, "ADAppOpen Placement '" + this.placement + "' call preload ads.");
+        PBMobileAds.getInstance().log(LogType.INFOR, logSuffix + "placement '" + this.placement + "' call preload ads.");
 
         isLoadingAd = true;
         AdRequest request = new AdRequest.Builder().build();
@@ -107,14 +109,14 @@ public class ADAppOpen {
                 loadTime = (new Date()).getTime();
                 setAdsListener();
 
-                PBMobileAds.getInstance().log(LogType.INFOR, "onAdLoaded: ADAppOpen Placement '" + placement + "'");
+                PBMobileAds.getInstance().log(LogType.INFOR, logSuffix + "onAdLoaded: placement '" + placement + "'");
                 if (adDelegate != null) adDelegate.onAdLoaded();
             }
 
             @Override
             public void onAdFailedToLoad(LoadAdError loadAdError) {
                 // Called when an app open ad has failed to load.
-                String messErr = "onAdFailedToLoad: ADAppOpen Placement '" + placement + "' with error: " + loadAdError.getMessage();
+                String messErr = logSuffix + "onAdFailedToLoad: placement '" + placement + "' with error: " + loadAdError.getMessage();
                 PBMobileAds.getInstance().log(LogType.INFOR, messErr);
                 if (adDelegate != null) adDelegate.onAdFailedToLoad(messErr);
                 isLoadingAd = false;
@@ -130,7 +132,7 @@ public class ADAppOpen {
             public void onAdClicked() {
                 super.onAdClicked();
 
-                PBMobileAds.getInstance().log(LogType.INFOR, "onAdClicked: ADAppOpen Placement '" + placement + "'");
+                PBMobileAds.getInstance().log(LogType.INFOR, logSuffix + "onAdClicked: placement '" + placement + "'");
                 if (adDelegate != null) adDelegate.onAdClicked();
             }
 
@@ -138,7 +140,7 @@ public class ADAppOpen {
             public void onAdImpression() {
                 super.onAdImpression();
 
-                PBMobileAds.getInstance().log(LogType.INFOR, "onAdImpression: ADAppOpen Placement '" + placement + "'");
+                PBMobileAds.getInstance().log(LogType.INFOR, logSuffix + "onAdImpression: placement '" + placement + "'");
                 if (adDelegate != null) adDelegate.onAdOpened();
             }
 
@@ -146,7 +148,7 @@ public class ADAppOpen {
             public void onAdDismissedFullScreenContent() {
                 // Called when fullscreen content is dismissed.
                 // Set the reference to null so isReady() returns false.
-                PBMobileAds.getInstance().log(LogType.INFOR, "onAdDismissedFullScreenContent: ADAppOpen Placement '" + placement + "'");
+                PBMobileAds.getInstance().log(LogType.INFOR, logSuffix + "onAdDismissedFullScreenContent: placement '" + placement + "'");
                 appOpenAd = null;
                 isShowingAd = false;
                 if (adDelegate != null) adDelegate.onAdClosed();
@@ -156,8 +158,8 @@ public class ADAppOpen {
             public void onAdFailedToShowFullScreenContent(AdError adError) {
                 // Called when fullscreen content failed to show.
                 // Set the reference to null so isReady() returns false.
-                String errMess = "ADAppOpen Placement '" + placement + "' with error: " + adError.getMessage();
-                PBMobileAds.getInstance().log(LogType.INFOR, "onAdFailedToShowFullScreenContent: " + errMess);
+                String errMess = "placement '" + placement + "' with error: " + adError.getMessage();
+                PBMobileAds.getInstance().log(LogType.INFOR, logSuffix + "onAdFailedToShowFullScreenContent: " + errMess);
                 appOpenAd = null;
                 isShowingAd = false;
                 if (adDelegate != null) adDelegate.onAdFailedToLoad(errMess);
@@ -166,7 +168,7 @@ public class ADAppOpen {
             @Override
             public void onAdShowedFullScreenContent() {
                 // Called when fullscreen content is shown.
-                PBMobileAds.getInstance().log(LogType.INFOR, "onAdShowedFullScreenContent: ADAppOpen Placement '" + placement + "'");
+                PBMobileAds.getInstance().log(LogType.INFOR, logSuffix + "onAdShowedFullScreenContent: placement '" + placement + "'");
             }
         });
     }
@@ -174,13 +176,13 @@ public class ADAppOpen {
     public void show(@NonNull final Activity activity) {
         // If the app open ad is already showing, do not show the ad again.
         if (isShowingAd) {
-            PBMobileAds.getInstance().log(LogType.INFOR, "ADAppOpen Placement '" + placement + "' is already showing");
+            PBMobileAds.getInstance().log(LogType.INFOR, logSuffix + "placement '" + placement + "' is already showing");
             return;
         }
 
         // If the app open ad is not available yet, invoke the callback then load the ad.
         if (!isReady()) {
-            PBMobileAds.getInstance().log(LogType.INFOR, "ADAppOpen Placement '" + placement + "' currently unavailable, call preLoad() first.");
+            PBMobileAds.getInstance().log(LogType.INFOR, logSuffix + "placement '" + placement + "' currently unavailable, call preLoad() first.");
             return;
         }
 
@@ -209,7 +211,7 @@ public class ADAppOpen {
     }
 
     public void destroy() {
-        PBMobileAds.getInstance().log(LogType.INFOR, "Destroy ADAppOpen Placement: " + this.placement);
+        PBMobileAds.getInstance().log(LogType.INFOR, logSuffix + "Destroy placement: " + this.placement);
         this.resetAD();
     }
 
