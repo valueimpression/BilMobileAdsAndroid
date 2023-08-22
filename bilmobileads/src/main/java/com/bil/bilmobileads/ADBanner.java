@@ -322,8 +322,8 @@ public class ADBanner implements Application.ActivityLifecycleCallbacks {
 
             // Create layout parameters for the FrameLayout
             FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(
-                    FrameLayout.LayoutParams.WRAP_CONTENT, // Width
-                    FrameLayout.LayoutParams.WRAP_CONTENT  // Height
+                    FrameLayout.LayoutParams.WRAP_CONTENT,
+                    FrameLayout.LayoutParams.WRAP_CONTENT
             );
             layoutParams.gravity = Gravity.CENTER;
             this.bannerView.setLayoutParams(layoutParams);
