@@ -190,7 +190,7 @@ public class ADBanner implements Application.ActivityLifecycleCallbacks {
         PBMobileAds.getInstance().setupPBS(adInfor.host);
 
         PBMobileAds.getInstance().log(LogType.DEBUG, "[ADBanner] - configID: " + adInfor.configId + " | adUnitID: " + adInfor.adUnitID);
-        adInfor.adUnitID = null;
+
         if (adInfor.adUnitID != null) {
             this.adUnit = new BannerAdUnit(adInfor.configId, w, h);
             this.startFetchData();
