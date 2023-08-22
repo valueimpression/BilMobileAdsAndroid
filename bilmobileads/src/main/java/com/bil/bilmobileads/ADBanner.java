@@ -190,7 +190,7 @@ public class ADBanner implements Application.ActivityLifecycleCallbacks {
         PBMobileAds.getInstance().setupPBS(adInfor.host);
 
         PBMobileAds.getInstance().log(LogType.DEBUG, "[ADBanner] - configID: " + adInfor.configId + " | adUnitID: " + adInfor.adUnitID);
-
+        
         if (adInfor.adUnitID != null) {
             this.adUnit = new BannerAdUnit(adInfor.configId, w, h);
             this.startFetchData();
@@ -312,11 +312,9 @@ public class ADBanner implements Application.ActivityLifecycleCallbacks {
 
                 @Override
                 public void onAdClosed(BannerView bannerView) {
+                    isLoadBannerSucc = false;
                     PBMobileAds.getInstance().log(LogType.INFOR, "onAdClosed: ADBanner Placement '" + placement + "'");
                     if (adDelegate != null) adDelegate.onAdClosed();
-
-                    isLoadBannerSucc = false;
-                    load();
                 }
             });
 
