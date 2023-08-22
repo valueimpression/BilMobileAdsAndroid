@@ -1,5 +1,6 @@
 package com.bil.bilmobileadsandroid;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.app.Activity;
@@ -25,10 +26,19 @@ import com.bil.bilmobileads.interfaces.AdDelegate;
 import com.bil.bilmobileads.interfaces.NativeAdCustomDelegate;
 import com.bil.bilmobileads.interfaces.NativeAdVideoDelegate;
 import com.bil.bilmobileads.interfaces.NativeAdLoaderCustomDelegate;
+import com.quantcast.choicemobile.ChoiceCmp;
+import com.quantcast.choicemobile.ChoiceCmpCallback;
+import com.quantcast.choicemobile.ChoiceCmpViewModel;
+import com.quantcast.choicemobile.core.model.ACData;
+import com.quantcast.choicemobile.core.model.TCData;
+import com.quantcast.choicemobile.data.model.ChoiceStylesResources;
+import com.quantcast.choicemobile.model.ChoiceError;
+import com.quantcast.choicemobile.model.NonIABData;
+import com.quantcast.choicemobile.model.PingReturn;
 
 import java.util.ArrayList;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements ChoiceCmpCallback {
 
     Activity curActivity;
 
@@ -51,10 +61,17 @@ public class MainActivity extends AppCompatActivity {
 
         final FrameLayout bannerView = findViewById(R.id.bannerView);
 
-//        this.curActivity = this;
+        this.curActivity = this;
+
+        ChoiceCmp.startChoice(
+                this.getApplication(),
+                "com.bil.bilmobileadsandroid",
+                "rfM1MHMq1JnPf",
+               this, new ChoiceStylesResources());
+
 //        this.adAppOpen = new ADAppOpen(this, "1005");
 
-//        this.adBanner = new ADBanner(bannerView, "1001");
+//        this.adBanner = new ADBanner(this, bannerView, "4e837170-c7c4-41f3-9aa4-5873e0258733");
 
 //        this.adInterstitial = new ADInterstitial("1002");
 
@@ -97,6 +114,8 @@ public class MainActivity extends AppCompatActivity {
                 if (adRewarded != null) adRewarded.show();
                 if (adAppOpen != null) adAppOpen.show(curActivity);
 //                if (adBanner != null) adBanner.load();
+
+                ChoiceCmp.forceDisplayUI(curActivity);
 
 //                if (builderArrayList.size() <= 0) {
 //                    PBMobileAds.getInstance().log(LogType.INFOR, "Native unavailable, preload before call show ads");
@@ -154,5 +173,40 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+    }
+
+    @Override
+    public void onCCPAConsentGiven(@NonNull String s) {
+        PBMobileAds.getInstance().log(LogType.INFOR,"onCCPAConsentGiven");
+    }
+
+    @Override
+    public void onCmpError(@NonNull ChoiceError choiceError) {
+        PBMobileAds.getInstance().log(LogType.INFOR,"onCmpError");
+    }
+
+    @Override
+    public void onCmpLoaded(@NonNull PingReturn pingReturn) {
+        PBMobileAds.getInstance().log(LogType.INFOR,"onCmpLoaded");
+    }
+
+    @Override
+    public void onCmpUIShown(@NonNull PingReturn pingReturn) {
+        PBMobileAds.getInstance().log(LogType.INFOR,"onCmpUIShown");
+    }
+
+    @Override
+    public void onGoogleVendorConsentGiven(@NonNull ACData acData) {
+        PBMobileAds.getInstance().log(LogType.INFOR,"onGoogleVendorConsentGiven");
+    }
+
+    @Override
+    public void onIABVendorConsentGiven(@NonNull TCData tcData) {
+        PBMobileAds.getInstance().log(LogType.INFOR,"onIABVendorConsentGiven");
+    }
+
+    @Override
+    public void onNonIABVendorConsentGiven(@NonNull NonIABData nonIABData) {
+        PBMobileAds.getInstance().log(LogType.INFOR,"onNonIABVendorConsentGiven");
     }
 }
