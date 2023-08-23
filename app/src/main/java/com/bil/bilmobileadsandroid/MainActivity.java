@@ -49,12 +49,14 @@ public class MainActivity extends AppCompatActivity {
 
         PBMobileAds.getInstance().initialize(this, true);
 
+        PBMobileAds.getInstance().setCCPAString("ha_nhat_ling_ccpa");
+
         final FrameLayout bannerView = findViewById(R.id.bannerView);
 
 //        this.curActivity = this;
 //        this.adAppOpen = new ADAppOpen(this, "1005");
 
-//        this.adBanner = new ADBanner(bannerView, "1001");
+        this.adBanner = new ADBanner(this, bannerView, "eea66d76-c12c-446b-a9b0-bdb2f39e0dac");
 
 //        this.adInterstitial = new ADInterstitial("1002");
 
@@ -78,25 +80,20 @@ public class MainActivity extends AppCompatActivity {
 //        });
 
         Button btnLoadFull = (Button) findViewById(R.id.loadFull);
-        btnLoadFull.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
+        btnLoadFull.setOnClickListener(view -> {
 //                adNativeCustom.preload();
-                if (adInterstitial != null) adInterstitial.preLoad();
-                if (adRewarded != null) adRewarded.preLoad();
-                if (adAppOpen != null) adAppOpen.preLoad(curActivity);
-//                if (adBanner != null)  adBanner.destroy();
-            }
+            if (adInterstitial != null) adInterstitial.preLoad();
+            if (adRewarded != null) adRewarded.preLoad();
+            if (adAppOpen != null) adAppOpen.preLoad(curActivity);
+            if (adBanner != null) adBanner.destroy();
         });
 
         Button btnShowFull = (Button) findViewById(R.id.showFull);
-        btnShowFull.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if (adInterstitial != null) adInterstitial.show();
-                if (adRewarded != null) adRewarded.show();
-                if (adAppOpen != null) adAppOpen.show(curActivity);
-//                if (adBanner != null) adBanner.load();
+        btnShowFull.setOnClickListener(view -> {
+            if (adInterstitial != null) adInterstitial.show();
+            if (adRewarded != null) adRewarded.show();
+            if (adAppOpen != null) adAppOpen.show(curActivity);
+            if (adBanner != null) adBanner.load();
 
 //                if (builderArrayList.size() <= 0) {
 //                    PBMobileAds.getInstance().log(LogType.INFOR, "Native unavailable, preload before call show ads");
@@ -151,7 +148,6 @@ public class MainActivity extends AppCompatActivity {
 //
 //                bannerView.removeAllViews();
 //                bannerView.addView(builder.getNativeView());
-            }
         });
 
     }

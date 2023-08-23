@@ -1,8 +1,11 @@
 
 package com.bil.bilmobileads;
 
+import android.app.Activity;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Build;
+import android.preference.PreferenceManager;
 import android.util.Log;
 import android.webkit.WebView;
 
@@ -32,6 +35,7 @@ import org.prebid.mobile.PrebidMobile;
 import org.prebid.mobile.TargetingParams;
 import org.prebid.mobile.api.data.InitializationStatus;
 import org.prebid.mobile.rendering.listeners.SdkInitializationListener;
+import org.prebid.mobile.rendering.sdk.deviceData.managers.UserConsentManager;
 
 import java.util.ArrayList;
 
@@ -355,6 +359,32 @@ public class PBMobileAds {
 
     public void disableCOPPA() {
         TargetingParams.setSubjectToCOPPA(false);
+    }
+
+    public void setConsentString(String consentString) {
+        if (consentString == null || consentString.isEmpty()) {
+            log(LogType.ERROR, "Consent String is null or empty");
+            return;
+        }
+        TargetingParams.setSubjectToGDPR(true);
+        TargetingParams.setGDPRConsentString(consentString);
+    }
+
+    public void setPurposeConsents(String purposeConsents) {
+        if (purposeConsents == null || purposeConsents.isEmpty()) {
+            log(LogType.ERROR, "PurposeConsents is null or empty");
+            return;
+        }
+        TargetingParams.setPurposeConsents(purposeConsents);
+    }
+
+    public void setCCPAString(String ccpaString) {
+        if (ccpaString == null || ccpaString.isEmpty()) {
+            log(LogType.ERROR, "CCPA is null or empty");
+            return;
+        }
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this.contextApp);
+        preferences.edit().putString(UserConsentManager.US_PRIVACY_KEY, ccpaString).apply();
     }
 
     public void setGender(PBMobileAds.GENDER gender) {
