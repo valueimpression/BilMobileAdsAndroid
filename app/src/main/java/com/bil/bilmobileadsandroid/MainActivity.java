@@ -49,14 +49,12 @@ public class MainActivity extends AppCompatActivity {
 
         PBMobileAds.getInstance().initialize(this, true);
 
-        PBMobileAds.getInstance().setCCPAString("ha_nhat_ling_ccpa");
-
         final FrameLayout bannerView = findViewById(R.id.bannerView);
 
 //        this.curActivity = this;
 //        this.adAppOpen = new ADAppOpen(this, "1005");
 
-        this.adBanner = new ADBanner(this, bannerView, "eea66d76-c12c-446b-a9b0-bdb2f39e0dac");
+//        this.adBanner = new ADBanner(this, bannerView, "1001");
 
 //        this.adInterstitial = new ADInterstitial("1002");
 
