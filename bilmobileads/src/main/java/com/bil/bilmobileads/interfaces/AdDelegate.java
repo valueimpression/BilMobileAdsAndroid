@@ -1,5 +1,7 @@
 package com.bil.bilmobileads.interfaces;
 
+import com.bil.bilmobileads.entity.AdData;
+
 public class AdDelegate {
 
     /*
@@ -37,6 +39,9 @@ public class AdDelegate {
      * Called when an ad request loaded fail.
      * */
     public void onAdFailedToLoad(String error) {
+    }
+
+    public void onPaidEvent(AdData adData) {
     }
 
 }

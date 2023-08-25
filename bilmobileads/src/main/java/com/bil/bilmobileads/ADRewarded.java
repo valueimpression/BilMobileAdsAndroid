@@ -3,6 +3,7 @@ package com.bil.bilmobileads;
 import android.app.Activity;
 
 import com.bil.bilmobileads.entity.ADRewardItem;
+import com.bil.bilmobileads.entity.AdData;
 import com.bil.bilmobileads.entity.LogType;
 import com.bil.bilmobileads.interfaces.ResultCallback;
 import com.bil.bilmobileads.interfaces.WorkCompleteDelegate;
@@ -27,6 +28,8 @@ import org.prebid.mobile.api.exceptions.AdException;
 import org.prebid.mobile.api.rendering.RewardedAdUnit;
 import org.prebid.mobile.api.rendering.listeners.InterstitialAdUnitListener;
 import org.prebid.mobile.api.rendering.listeners.RewardedAdUnitListener;
+import org.prebid.mobile.rendering.bidding.data.bid.Bid;
+import org.prebid.mobile.rendering.bidding.data.bid.BidResponse;
 
 import java.util.EnumSet;
 
@@ -108,6 +111,7 @@ public class ADRewarded {
 
         if (this.amRewarded != null) {
             this.amRewarded.setFullScreenContentCallback(null);
+            this.amRewarded.setOnPaidEventListener(null);
             this.amRewarded = null;
         }
 
@@ -121,7 +125,7 @@ public class ADRewarded {
     public void preLoad() {
         PBMobileAds.getInstance().log(LogType.INFOR, "ADRewarded Placement '" + this.placement + "' - isReady: " + this.isReady() + " | isFetchingAD: " + this.isFetchingAD);
         if (this.adUnitObj == null || this.isReady() || this.isFetchingAD) {
-            if (this.adUnitObj == null && !this.isFetchingAD) {
+            if (this.adUnitObj == null) {
                 PBMobileAds.getInstance().log(LogType.INFOR, "ADRewarded placement: " + this.placement + " is not ready to load.");
                 this.getConfigAD();
                 return;
@@ -145,9 +149,9 @@ public class ADRewarded {
 
         PBMobileAds.getInstance().log(LogType.INFOR, "Preload ADRewarded Placement: " + this.placement);
         PBMobileAds.getInstance().setupPBS(adInfor.host);
-        PBMobileAds.getInstance().log(LogType.INFOR, "[ADRewarded Video] - configId: " + adInfor.configId + " | adUnitID: " + adInfor.adUnitID);
+        PBMobileAds.getInstance().log(LogType.DEBUG, "[ADRewarded Video] - configId: " + adInfor.configId + " | adUnitID: " + adInfor.adUnitID);
 
-        if (adInfor.adUnitID != null) {
+        if (adInfor.adUnitID != null && !adInfor.adUnitID.isEmpty()) {
             this.adUnit = new RewardedVideoAdUnit(adInfor.configId);
 
             // Create Request PBS
@@ -207,6 +211,14 @@ public class ADRewarded {
                     isHaveAds = false;
                     PBMobileAds.getInstance().log(LogType.INFOR, "onAdDisplayed: ADRewarded Placement '" + placement + "'");
                     if (adDelegate != null) adDelegate.onRewardedAdOpened();
+
+                    BidResponse bidResponse = rewardedAdUnit.getBidResponse();
+                    if (bidResponse != null) {
+                        PBMobileAds.getInstance().log(LogType.INFOR, "onPaidEvent: ADRewarded Placement '" + placement + "'");
+                        Bid bidWin = bidResponse.getWinningBid();
+                        AdData adData = new AdData(bidResponse.getCur(), 3, bidWin.getPrice() * 1000);
+                        if (adDelegate != null) adDelegate.onRewardedAdPaidEvent(adData);
+                    }
                 }
 
                 @Override
@@ -258,6 +270,7 @@ public class ADRewarded {
             public void onAdImpression() {
                 super.onAdImpression();
 
+                isHaveAds = false;
                 PBMobileAds.getInstance().log(LogType.INFOR, "onAdImpression: ADRewarded Placement '" + placement + "'");
                 if (adDelegate != null) adDelegate.onRewardedAdOpened();
             }
@@ -265,7 +278,6 @@ public class ADRewarded {
             @Override
             public void onAdDismissedFullScreenContent() {
                 super.onAdDismissedFullScreenContent();
-                amRewarded = null;
 
                 PBMobileAds.getInstance().log(LogType.INFOR, "onAdDismissedFullScreenContent: ADRewarded Placement '" + placement + "'");
                 if (adDelegate != null) adDelegate.onRewardedAdClosed();
@@ -274,8 +286,8 @@ public class ADRewarded {
             @Override
             public void onAdFailedToShowFullScreenContent(@NonNull AdError adError) {
                 super.onAdFailedToShowFullScreenContent(adError);
-                amRewarded = null;
 
+                isHaveAds = false;
                 PBMobileAds.getInstance().log(LogType.INFOR, "onAdFailedToShowFullScreenContent: ADRewarded Placement '" + placement + "' | " + adError.getMessage());
                 if (adDelegate != null) adDelegate.onRewardedAdFailedToLoad(adError.getMessage());
             }
@@ -286,11 +298,16 @@ public class ADRewarded {
                 PBMobileAds.getInstance().log(LogType.INFOR, "onAdShowedFullScreenContent: ADRewarded Placement '" + placement + "'");
             }
         });
+        amRewarded.setOnPaidEventListener(adValue -> {
+            PBMobileAds.getInstance().log(LogType.INFOR, "onPaidEvent: ADRewarded Placement '" + placement + "'");
+            AdData adData = new AdData(adValue.getCurrencyCode(), adValue.getPrecisionType(), adValue.getValueMicros());
+            if (adDelegate != null) adDelegate.onRewardedAdPaidEvent(adData);
+        });
     }
 
     public void show() {
         if (this.isReady()) {
-            if(this.amRewarded != null) {
+            if (this.amRewarded != null) {
                 this.amRewarded.show(this.activityAd, reward -> {
                     String dataReward = "Type: " + reward.getType() + " | Amount: " + reward.getAmount();
                     PBMobileAds.getInstance().log(LogType.INFOR, "onUserEarnedReward: ADRewarded Placement '" + placement + "' with RewardItem - " + dataReward);
@@ -299,7 +316,7 @@ public class ADRewarded {
                     if (adDelegate != null) adDelegate.onUserEarnedReward();
                 });
             }
-            if(this.rewardedAdUnit != null) {
+            if (this.rewardedAdUnit != null) {
                 this.rewardedAdUnit.show();
             }
         } else {

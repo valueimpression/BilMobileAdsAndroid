@@ -8,6 +8,7 @@ import android.os.Looper;
 import android.view.ViewGroup;
 
 import com.bil.bilmobileads.entity.ADFormat;
+import com.bil.bilmobileads.entity.AdData;
 import com.bil.bilmobileads.entity.AdInfor;
 import com.bil.bilmobileads.entity.AdUnitObj;
 import com.bil.bilmobileads.entity.LogType;
@@ -131,7 +132,7 @@ public class ADNativeStyle implements Application.ActivityLifecycleCallbacks {
         }
 
         if (this.adUnitObj == null || this.isLoaded() || this.isFetchingAD) {
-            if (this.adUnitObj == null && !this.isFetchingAD) {
+            if (this.adUnitObj == null) {
                 PBMobileAds.getInstance().log(LogType.INFOR, "ADNativeStyle placement: " + this.placement + " is not ready to load.");
                 this.getConfigAD();
                 return;
@@ -147,7 +148,7 @@ public class ADNativeStyle implements Application.ActivityLifecycleCallbacks {
         }
 
         // Get AdInfor
-        AdInfor adInfor = this.adUnitObj.adInfor.get(0); // PBMobileAds.getInstance().getAdInfor(isVideo, this.adUnitObj);
+        AdInfor adInfor = this.adUnitObj.adInfor.get(0);
         if (adInfor == null) {
             PBMobileAds.getInstance().log(LogType.INFOR, "AdInfor of ADNativeStyle Placement '" + this.placement + "' is not exist.");
             return;
@@ -216,6 +217,11 @@ public class ADNativeStyle implements Application.ActivityLifecycleCallbacks {
                 PBMobileAds.getInstance().log(LogType.INFOR, messErr);
                 if (adDelegate != null) adDelegate.onAdFailedToLoad(messErr);
             }
+        });
+        this.amNative.setOnPaidEventListener(adValue -> {
+            PBMobileAds.getInstance().log(LogType.INFOR, "onPaidEvent: ADNativeStyle Placement '" + placement + "'");
+            AdData adData = new AdData(adValue.getCurrencyCode(), adValue.getPrecisionType(), adValue.getValueMicros());
+            if (adDelegate != null) adDelegate.onPaidEvent(adData);
         });
 
         // Add AD to view

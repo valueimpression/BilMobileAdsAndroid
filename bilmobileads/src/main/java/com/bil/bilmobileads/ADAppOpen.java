@@ -6,6 +6,7 @@ import android.content.Context;
 
 import androidx.annotation.NonNull;
 
+import com.bil.bilmobileads.entity.AdData;
 import com.bil.bilmobileads.entity.AdInfor;
 import com.bil.bilmobileads.entity.AdUnitObj;
 import com.bil.bilmobileads.entity.LogType;
@@ -171,6 +172,11 @@ public class ADAppOpen {
                 PBMobileAds.getInstance().log(LogType.INFOR, logSuffix + "onAdShowedFullScreenContent: placement '" + placement + "'");
             }
         });
+        appOpenAd.setOnPaidEventListener(adValue -> {
+            PBMobileAds.getInstance().log(LogType.INFOR, logSuffix + "onPaidEvent: Placement '" + placement + "'");
+            AdData adData = new AdData(adValue.getCurrencyCode(), adValue.getPrecisionType(), adValue.getValueMicros());
+            if (adDelegate != null) adDelegate.onPaidEvent(adData);
+        });
     }
 
     public void show(@NonNull final Activity activity) {
@@ -216,13 +222,14 @@ public class ADAppOpen {
     }
 
     void resetAD() {
-        if (this.appOpenAd == null) return;
-
         this.isLoadingAd = false;
         this.isShowingAd = false;
         this.isFetchingAD = false;
 
-        this.appOpenAd.setFullScreenContentCallback(null);
-        this.appOpenAd = null;
+        if (this.appOpenAd != null) {
+            this.appOpenAd.setFullScreenContentCallback(null);
+            this.appOpenAd.setOnPaidEventListener(null);
+            this.appOpenAd = null;
+        }
     }
 }

@@ -1,6 +1,7 @@
 package com.bil.bilmobileads.interfaces;
 
 import com.bil.bilmobileads.entity.ADRewardItem;
+import com.bil.bilmobileads.entity.AdData;
 
 public class AdRewardedDelegate {
 
@@ -23,5 +24,8 @@ public class AdRewardedDelegate {
     }
 
     public void onRewardedAdFailedToShow(String error) {
+    }
+
+    public void onRewardedAdPaidEvent(AdData adData) {
     }
 }

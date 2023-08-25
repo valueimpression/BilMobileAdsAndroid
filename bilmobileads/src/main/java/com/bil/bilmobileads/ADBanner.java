@@ -10,6 +10,7 @@ import android.view.Gravity;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 
+import com.bil.bilmobileads.entity.AdData;
 import com.bil.bilmobileads.entity.LogType;
 import com.bil.bilmobileads.interfaces.ResultCallback;
 import com.bil.bilmobileads.interfaces.WorkCompleteDelegate;
@@ -35,6 +36,8 @@ import org.prebid.mobile.api.data.VideoPlacementType;
 import org.prebid.mobile.api.exceptions.AdException;
 import org.prebid.mobile.api.rendering.BannerView;
 import org.prebid.mobile.api.rendering.listeners.BannerViewListener;
+import org.prebid.mobile.rendering.bidding.data.bid.Bid;
+import org.prebid.mobile.rendering.bidding.data.bid.BidResponse;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -135,6 +138,7 @@ public class ADBanner implements Application.ActivityLifecycleCallbacks {
         if (this.amBanner != null) {
             this.amBanner.destroy();
             this.amBanner.setAdListener(null);
+            this.amBanner.setOnPaidEventListener(null);
             this.amBanner = null;
         }
 
@@ -154,8 +158,8 @@ public class ADBanner implements Application.ActivityLifecycleCallbacks {
             return;
         }
 
-        if (this.adUnitObj == null || this.isLoaded() || this.isFetchingAD) {
-            if (this.adUnitObj == null && !this.isFetchingAD) {
+        if (this.adUnitObj == null || this.isLoaded()) {
+            if (this.adUnitObj == null) {
                 PBMobileAds.getInstance().log(LogType.INFOR, "ADBanner placement: " + this.placement + " is not ready to load.");
                 this.getConfigAD();
                 return;
@@ -188,10 +192,9 @@ public class ADBanner implements Application.ActivityLifecycleCallbacks {
 
         PBMobileAds.getInstance().log(LogType.INFOR, "Load ADBanner Placement: " + this.placement);
         PBMobileAds.getInstance().setupPBS(adInfor.host);
-
         PBMobileAds.getInstance().log(LogType.DEBUG, "[ADBanner] - configID: " + adInfor.configId + " | adUnitID: " + adInfor.adUnitID);
 
-        if (adInfor.adUnitID != null) {
+        if (adInfor.adUnitID != null && !adInfor.adUnitID.isEmpty()) {
             this.adUnit = new BannerAdUnit(adInfor.configId, w, h);
             this.startFetchData();
 
@@ -265,6 +268,11 @@ public class ADBanner implements Application.ActivityLifecycleCallbacks {
                     if (adDelegate != null) adDelegate.onAdFailedToLoad(messErr);
                 }
             });
+            this.amBanner.setOnPaidEventListener(adValue -> {
+                PBMobileAds.getInstance().log(LogType.INFOR, "onPaidEvent: ADBanner Placement '" + placement + "'");
+                AdData adData = new AdData(adValue.getCurrencyCode(), adValue.getPrecisionType(), adValue.getValueMicros());
+                if (adDelegate != null) adDelegate.onPaidEvent(adData);
+            });
 
             // Add AD to view
             this.adView.removeAllViews();
@@ -294,6 +302,14 @@ public class ADBanner implements Application.ActivityLifecycleCallbacks {
                 public void onAdDisplayed(BannerView bannerView) {
                     PBMobileAds.getInstance().log(LogType.INFOR, "onAdDisplayed: ADBanner Placement '" + placement + "'");
                     if (adDelegate != null) adDelegate.onAdOpened();
+
+                    BidResponse bidResponse = bannerView.getBidResponse();
+                    if (bidResponse != null) {
+                        PBMobileAds.getInstance().log(LogType.INFOR, "onPaidEvent: ADBanner Placement '" + placement + "'");
+                        Bid bidWin = bidResponse.getWinningBid();
+                        AdData adData = new AdData(bidResponse.getCur(), 3, bidWin.getPrice() * 1000);
+                        if (adDelegate != null) adDelegate.onPaidEvent(adData);
+                    }
                 }
 
                 @Override
