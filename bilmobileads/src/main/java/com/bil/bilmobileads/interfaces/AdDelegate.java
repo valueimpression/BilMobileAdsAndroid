@@ -1,5 +1,7 @@
 package com.bil.bilmobileads.interfaces;
 
+import android.view.ViewGroup;
+
 import com.bil.bilmobileads.entity.AdData;
 
 public class AdDelegate {
@@ -14,6 +16,9 @@ public class AdDelegate {
      * Called when AD Opened.
      * */
     public void onAdOpened() {
+    }
+
+    public void onAdReturn(ViewGroup viewGroup) {
     }
 
     /*
@@ -43,5 +48,4 @@ public class AdDelegate {
 
     public void onPaidEvent(AdData adData) {
     }
-
 }

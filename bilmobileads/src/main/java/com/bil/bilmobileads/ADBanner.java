@@ -102,14 +102,8 @@ public class ADBanner implements Application.ActivityLifecycleCallbacks {
                     isFetchingAD = false;
                     adUnitObj = data;
 
-                    PBMobileAds.getInstance().showCMP(new WorkCompleteDelegate() {
-                        @Override
-                        public void doWork() {
-                            // Setup Application Delegate
-                            ((Activity) PBMobileAds.getInstance().getContextApp()).getApplication().registerActivityLifecycleCallbacks(ADBanner.this);
-
-                            load();
-                        }
+                    PBMobileAds.getInstance().showCMP(() -> {
+                        load();
                     });
                 }
 
@@ -129,6 +123,10 @@ public class ADBanner implements Application.ActivityLifecycleCallbacks {
         this.isFetchingAD = false;
         this.isLoadBannerSucc = false;
         this.amRequest = null;
+
+        ((Activity) PBMobileAds.getInstance().getContextApp()).getApplication().unregisterActivityLifecycleCallbacks(this);
+
+        if (this.adView != null) this.adView.removeAllViews();
 
         if (this.adUnit != null) {
             this.adUnit.stopAutoRefresh();
@@ -190,6 +188,9 @@ public class ADBanner implements Application.ActivityLifecycleCallbacks {
             h = 1;
         }
 
+        // Setup Application Delegate
+        ((Activity) PBMobileAds.getInstance().getContextApp()).getApplication().registerActivityLifecycleCallbacks(ADBanner.this);
+
         PBMobileAds.getInstance().log(LogType.INFOR, "Load ADBanner Placement: " + this.placement);
         PBMobileAds.getInstance().setupPBS(adInfor.host);
         PBMobileAds.getInstance().log(LogType.DEBUG, "[ADBanner] - configID: " + adInfor.configId + " | adUnitID: " + adInfor.adUnitID);
@@ -220,6 +221,7 @@ public class ADBanner implements Application.ActivityLifecycleCallbacks {
                             amBanner.setAdSizes(curBannerSize);
                             PBMobileAds.getInstance().log(LogType.INFOR, "onAdLoaded: ADBanner Placement '" + placement + "'");
                             if (adDelegate != null) adDelegate.onAdLoaded();
+                            if (adDelegate != null) adDelegate.onAdReturn(amBanner);
                         }
 
                         @Override
@@ -296,6 +298,7 @@ public class ADBanner implements Application.ActivityLifecycleCallbacks {
                     isLoadBannerSucc = true;
                     PBMobileAds.getInstance().log(LogType.INFOR, "onAdLoaded: ADBanner Placement '" + placement + "'");
                     if (adDelegate != null) adDelegate.onAdLoaded();
+                    if (adDelegate != null) adDelegate.onAdReturn(bannerView);
                 }
 
                 @Override
@@ -351,15 +354,17 @@ public class ADBanner implements Application.ActivityLifecycleCallbacks {
     }
 
     public void destroy() {
-        ((Activity) PBMobileAds.getInstance().getContextApp()).getApplication().unregisterActivityLifecycleCallbacks(this);
-
         PBMobileAds.getInstance().log(LogType.INFOR, "Destroy ADBanner Placement: " + this.placement);
-        this.adView.removeAllViews();
         this.resetAD();
     }
 
     public void setListener(AdDelegate adDelegate) {
         this.adDelegate = adDelegate;
+    }
+
+    public void setViewGroup(ViewGroup adView) {
+        this.adView.removeAllViews();
+        this.adView = adView;
     }
 
     public int getWidth() {

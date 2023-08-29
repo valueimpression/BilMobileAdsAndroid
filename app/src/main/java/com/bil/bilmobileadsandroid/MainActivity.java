@@ -4,8 +4,11 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.os.Handler;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
@@ -20,8 +23,10 @@ import com.bil.bilmobileads.ADNativeStyle;
 import com.bil.bilmobileads.ADNativeView;
 import com.bil.bilmobileads.ADRewarded;
 import com.bil.bilmobileads.PBMobileAds;
+import com.bil.bilmobileads.entity.AdData;
 import com.bil.bilmobileads.entity.LogType;
 import com.bil.bilmobileads.interfaces.AdDelegate;
+import com.bil.bilmobileads.interfaces.AdRewardedDelegate;
 import com.bil.bilmobileads.interfaces.NativeAdCustomDelegate;
 import com.bil.bilmobileads.interfaces.NativeAdVideoDelegate;
 import com.bil.bilmobileads.interfaces.NativeAdLoaderCustomDelegate;
@@ -43,6 +48,8 @@ public class MainActivity extends AppCompatActivity {
     ArrayList<ADNativeView.Builder> builderArrayList = new ArrayList<>();
     ADNativeView.Builder builderView;
 
+    boolean isShow = false;
+
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
@@ -50,13 +57,28 @@ public class MainActivity extends AppCompatActivity {
         PBMobileAds.getInstance().initialize(this, true);
 
         final FrameLayout bannerView = findViewById(R.id.bannerView);
+        final FrameLayout bannerView2 = findViewById(R.id.bannerView2);
 
 //        this.curActivity = this;
 //        this.adAppOpen = new ADAppOpen(this, "1005");
 
-//        this.adBanner = new ADBanner(this, bannerView, "1001");
+        this.adBanner = new ADBanner(this, bannerView, "1001");
+        this.adBanner.setListener(new AdDelegate() {
+            @Override
+            public void onAdReturn(ViewGroup viewGroup) {
+                super.onAdReturn(viewGroup);
+                if (isShow) {
+                    adBanner.setViewGroup(bannerView);
+                    bannerView.addView(viewGroup);
+                } else {
+                    adBanner.setViewGroup(bannerView2);
+                    bannerView2.addView(viewGroup);
+                }
+                isShow = !isShow;
+            }
+        });
 
-//        this.adInterstitial = new ADInterstitial("1002");
+//        this.adInterstitial = new ADInterstitial(this,"1002");
 
 //        this.adRewarded = new ADRewarded(this, "1003");
 

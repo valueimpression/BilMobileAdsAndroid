@@ -25,6 +25,8 @@ import com.consentmanager.sdk.callbacks.OnCloseCallback;
 import com.consentmanager.sdk.model.CMPConfig;
 import com.consentmanager.sdk.storage.CMPStorageConsentManager;
 import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.MobileAds;
+import com.google.android.gms.ads.RequestConfiguration;
 //import com.google.android.gms.ads.rewarded.RewardedAdCallback;
 
 import org.json.JSONArray;
@@ -38,6 +40,8 @@ import org.prebid.mobile.rendering.listeners.SdkInitializationListener;
 import org.prebid.mobile.rendering.sdk.deviceData.managers.UserConsentManager;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public class PBMobileAds {
 
@@ -51,7 +55,6 @@ public class PBMobileAds {
     private String pbServerEndPoint = "";
     String nativeTemplateId = "";
     boolean gdprConfirm = false;
-    boolean isTestMode = false;
     boolean isShowCMP = false;
 
     // LOG:
@@ -71,21 +74,23 @@ public class PBMobileAds {
             throw new NullPointerException();
         }
         this.contextApp = context;
-        this.isTestMode = testMode;
 
         // Declare in init to the user agent could be passed in first call
-        PrebidMobile.initializeSdk(context, new SdkInitializationListener() {
-            @Override
-            public void onInitializationComplete(@NonNull InitializationStatus status) {
-                PBMobileAds.getInstance().log(LogType.INFOR, "PBMobileAds Init");
-            }
-        });
+        PrebidMobile.initializeSdk(context, status -> PBMobileAds.getInstance().log(LogType.INFOR, "PBMobileAds Init"));
         PrebidMobile.setShareGeoLocation(true);
+        PrebidMobile.setPbsDebug(testMode);
 //        PrebidMobile.setApplicationContext(context.getApplicationContext());
 
         this.log(LogType.DEBUG, "Webview With SDK: " + Build.VERSION.SDK_INT);
         WebView webView = new WebView(Build.VERSION.SDK_INT > 21 ? context : context.getApplicationContext());
         webView.clearCache(true);
+    }
+
+    public void setTestDeviceIds(String testDeviceIds) {
+        // Sample device ID:  33BE2250B43518CCDA7DE426D04EE231
+        RequestConfiguration configuration =
+                new RequestConfiguration.Builder().setTestDeviceIds(Arrays.asList(testDeviceIds)).build();
+        MobileAds.setRequestConfiguration(configuration);
     }
 
     // MARK: - Call API AD
