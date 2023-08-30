@@ -4,7 +4,10 @@ package com.bil.bilmobileads;
 import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
 import android.os.Build;
+import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.webkit.WebView;
@@ -95,111 +98,122 @@ public class PBMobileAds {
 
     // MARK: - Call API AD
     void getADConfig(final String adUnit, final ResultCallback resultAD) {
-        this.log(LogType.DEBUG, "Start Request Config adUnit: " + adUnit);
+        try {
+            this.log(LogType.DEBUG, "Start Request Config adUnit: " + adUnit);
 
-        HttpApi httpApi = new HttpApi<JSONObject>(Constants.GET_DATA_CONFIG + adUnit, new ResultCallback<JSONObject, Exception>() {
-            @Override
-            public void success(JSONObject dataJSON) {
-                try {
-                    // Check AdUnitObj Exist if init new Ad > 2
-                    AdUnitObj adUnitObjCheck = getAdUnitObj(adUnit);
-                    if (adUnitObjCheck != null) {
-                        resultAD.success(adUnitObjCheck);
-                        return;
-                    }
+            // Get GAM App ID
+            ApplicationInfo appInfo = this.contextApp.getPackageManager().getApplicationInfo(this.contextApp.getPackageName(), PackageManager.GET_META_DATA);
+            Bundle bundle = appInfo.metaData;
+            String gamAppID = bundle.getString("com.google.android.gms.ads.APPLICATION_ID");
 
-                    pbServerEndPoint = dataJSON.getString("pbServerEndPoint");
-                    nativeTemplateId = dataJSON.getString("nativeTemplateId");
-                    gdprConfirm = dataJSON.getBoolean("gdprConfirm");
-
-                    // Set all ad type config
-                    JSONObject adunitJsonObj = dataJSON.getJSONObject("adunit");
-
-                    String placement = adunitJsonObj.getString("placement");
-                    ADType type = getAdType(adunitJsonObj.getString("type"));
-                    boolean isActive = adunitJsonObj.getBoolean("isActive");
-                    int refreshTime = adunitJsonObj.getInt("refreshTime");
-
-                    // Create AdInfor
-                    ArrayList<AdInfor> adInforList = new ArrayList<AdInfor>();
-                    JSONArray adInforArray = adunitJsonObj.getJSONArray("adInfor");
-                    for (int j = 0; j < adInforArray.length(); j++) {
-                        JSONObject adInforObj = adInforArray.getJSONObject(j);
-                        boolean isVideo = adInforObj.getBoolean("isVideo");
-                        String configId = adInforObj.getString("configId");
-                        String adUnitID = adInforObj.getString("adUnitID");
-                        // Create Host
-                        JSONObject hostObj = adInforObj.getJSONObject("host");
-                        String pbHost = hostObj.getString("pbHost");
-                        String pbAccountId = hostObj.getString("pbAccountId");
-                        String storedAuctionResponse = hostObj.getString("storedAuctionResponse");
-                        HostCustom hostCustom = new HostCustom(pbHost, pbAccountId, storedAuctionResponse);
-
-                        AdInfor adInfor = new AdInfor(isVideo, hostCustom, configId, adUnitID);
-                        adInforList.add(adInfor);
-                    }
-
-                    // Validate defaultType Bid type
-                    ADFormat defaultFormat = adunitJsonObj.getString("defaultType").equalsIgnoreCase(ADFormat.HTML.toString()) ? ADFormat.HTML : ADFormat.VAST;
-                    if (adInforList.size() < 2) {
-                        ADFormat bidType = adInforList.get(0).isVideo ? ADFormat.VAST : ADFormat.HTML;
-                        defaultFormat = defaultFormat == bidType ? defaultFormat : bidType;
-                    }
-
-                    AdUnitObj adUnitObj;
-                    // Set ad size if type is banner
-                    if (type == ADType.Banner || type == ADType.SmartBanner) {
-                        String width = adunitJsonObj.has("width") && !adunitJsonObj.getString("width").isEmpty() ? adunitJsonObj.getString("width") : "320";
-                        String height = adunitJsonObj.has("height") && !adunitJsonObj.getString("height").isEmpty() ? adunitJsonObj.getString("height") : "50";
-                        String size = width + "x" + height;
-
-                        BannerSize bannerSize;
-                        switch (size) {
-                            case "320x50":
-                                bannerSize = BannerSize.Banner320x50;
-                                break;
-                            case "320x100":
-                                bannerSize = BannerSize.Banner320x100;
-                                break;
-                            case "300x250":
-                                bannerSize = BannerSize.Banner300x250;
-                                break;
-                            case "468x60":
-                                bannerSize = BannerSize.Banner468x60;
-                                break;
-                            case "728x90":
-                                bannerSize = BannerSize.Banner728x90;
-                                break;
-                            default:
-                                bannerSize = BannerSize.SmartBanner;
-                                break;
+            HttpApi httpApi = new HttpApi<JSONObject>(Constants.GET_DATA_CONFIG + adUnit + "&appID=" + gamAppID, new ResultCallback<JSONObject, Exception>() {
+                @Override
+                public void success(JSONObject dataJSON) {
+                    try {
+                        // Check AdUnitObj Exist if init new Ad > 2
+                        AdUnitObj adUnitObjCheck = getAdUnitObj(adUnit);
+                        if (adUnitObjCheck != null) {
+                            resultAD.success(adUnitObjCheck);
+                            return;
                         }
-                        adUnitObj = new AdUnitObj(placement, type, defaultFormat, isActive, adInforList, bannerSize, refreshTime);
-                    } else {
-                        adUnitObj = new AdUnitObj(placement, type, defaultFormat, isActive, adInforList, refreshTime);
+
+                        pbServerEndPoint = dataJSON.getString("pbServerEndPoint");
+                        nativeTemplateId = dataJSON.getString("nativeTemplateId");
+                        gdprConfirm = dataJSON.getBoolean("gdprConfirm");
+
+                        // Set all ad type config
+                        JSONObject adunitJsonObj = dataJSON.getJSONObject("adunit");
+
+                        String placement = adunitJsonObj.getString("placement");
+                        ADType type = getAdType(adunitJsonObj.getString("type"));
+                        boolean isActive = adunitJsonObj.getBoolean("isActive");
+                        int refreshTime = adunitJsonObj.getInt("refreshTime");
+
+                        // Create AdInfor
+                        ArrayList<AdInfor> adInforList = new ArrayList<AdInfor>();
+                        JSONArray adInforArray = adunitJsonObj.getJSONArray("adInfor");
+                        for (int j = 0; j < adInforArray.length(); j++) {
+                            JSONObject adInforObj = adInforArray.getJSONObject(j);
+                            boolean isVideo = adInforObj.getBoolean("isVideo");
+                            String configId = adInforObj.getString("configId");
+                            String adUnitID = adInforObj.getString("adUnitID");
+                            // Create Host
+                            JSONObject hostObj = adInforObj.getJSONObject("host");
+                            String pbHost = hostObj.getString("pbHost");
+                            String pbAccountId = hostObj.getString("pbAccountId");
+                            String storedAuctionResponse = hostObj.getString("storedAuctionResponse");
+                            HostCustom hostCustom = new HostCustom(pbHost, pbAccountId, storedAuctionResponse);
+
+                            AdInfor adInfor = new AdInfor(isVideo, hostCustom, configId, adUnitID);
+                            adInforList.add(adInfor);
+                        }
+
+                        // Validate defaultType Bid type
+                        ADFormat defaultFormat = adunitJsonObj.getString("defaultType").equalsIgnoreCase(ADFormat.HTML.toString()) ? ADFormat.HTML : ADFormat.VAST;
+                        if (adInforList.size() < 2) {
+                            ADFormat bidType = adInforList.get(0).isVideo ? ADFormat.VAST : ADFormat.HTML;
+                            defaultFormat = defaultFormat == bidType ? defaultFormat : bidType;
+                        }
+
+                        AdUnitObj adUnitObj;
+                        // Set ad size if type is banner
+                        if (type == ADType.Banner || type == ADType.SmartBanner) {
+                            String width = adunitJsonObj.has("width") && !adunitJsonObj.getString("width").isEmpty() ? adunitJsonObj.getString("width") : "320";
+                            String height = adunitJsonObj.has("height") && !adunitJsonObj.getString("height").isEmpty() ? adunitJsonObj.getString("height") : "50";
+                            String size = width + "x" + height;
+
+                            BannerSize bannerSize;
+                            switch (size) {
+                                case "320x50":
+                                    bannerSize = BannerSize.Banner320x50;
+                                    break;
+                                case "320x100":
+                                    bannerSize = BannerSize.Banner320x100;
+                                    break;
+                                case "300x250":
+                                    bannerSize = BannerSize.Banner300x250;
+                                    break;
+                                case "468x60":
+                                    bannerSize = BannerSize.Banner468x60;
+                                    break;
+                                case "728x90":
+                                    bannerSize = BannerSize.Banner728x90;
+                                    break;
+                                default:
+                                    bannerSize = BannerSize.SmartBanner;
+                                    break;
+                            }
+                            adUnitObj = new AdUnitObj(placement, type, defaultFormat, isActive, adInforList, bannerSize, refreshTime);
+                        } else {
+                            adUnitObj = new AdUnitObj(placement, type, defaultFormat, isActive, adInforList, refreshTime);
+                        }
+                        listAdUnitObj.add(adUnitObj);
+
+                        // Return result
+                        resultAD.success(adUnitObj);
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                        PBMobileAds.getInstance().log(LogType.ERROR, e.getLocalizedMessage());
+                    } catch (NullPointerException e) {
+                        e.printStackTrace();
+                        PBMobileAds.getInstance().log(LogType.ERROR, e.getLocalizedMessage());
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        PBMobileAds.getInstance().log(LogType.ERROR, e.getLocalizedMessage());
                     }
-                    listAdUnitObj.add(adUnitObj);
-
-                    // Return result
-                    resultAD.success(adUnitObj);
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                    PBMobileAds.getInstance().log(LogType.ERROR, e.getLocalizedMessage());
-                } catch (NullPointerException e) {
-                    e.printStackTrace();
-                    PBMobileAds.getInstance().log(LogType.ERROR, e.getLocalizedMessage());
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    PBMobileAds.getInstance().log(LogType.ERROR, e.getLocalizedMessage());
                 }
-            }
 
-            @Override
-            public void failure(Exception error) {
-                resultAD.failure(error);
-            }
-        });
-        httpApi.execute();
+                @Override
+                public void failure(Exception error) {
+                    resultAD.failure(error);
+                }
+            });
+            httpApi.execute();
+        } catch (PackageManager.NameNotFoundException e) {
+            e.printStackTrace();
+        } catch (NullPointerException e) {
+            e.printStackTrace();
+        }
     }
 
     // MARK: - Get Data Config
