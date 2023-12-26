@@ -233,7 +233,7 @@ public class ADNativeStyle implements Application.ActivityLifecycleCallbacks {
         this.amRequest = new AdManagerAdRequest.Builder().build();
         this.adUnit.fetchDemand(this.amRequest, resultCode -> {
             PBMobileAds.getInstance().log(LogType.INFOR, "PBS demand fetch ADNativeStyle placement '" + placement + "' for DFP: " + resultCode.name());
-            amNative.loadAd(amRequest);
+            if (amNative != null) amNative.loadAd(amRequest);
         });
     }
 

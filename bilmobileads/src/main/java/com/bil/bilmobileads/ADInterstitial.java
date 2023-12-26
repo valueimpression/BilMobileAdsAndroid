@@ -130,127 +130,135 @@ public class ADInterstitial {
 
     // MARK: - Public FUNC
     public void preLoad() {
-        PBMobileAds.getInstance().log(LogType.INFOR, "ADInterstitial Placement '" + this.placement + "' - isReady: " + this.isReady() + " | isFetchingAD: " + this.isFetchingAD);
-        if (this.adUnitObj == null || this.isReady() || this.isFetchingAD) {
-            if (this.adUnitObj == null) {
-                PBMobileAds.getInstance().log(LogType.INFOR, "ADInterstitial placement: " + this.placement + " is not ready to load.");
-                this.getConfigAD();
+        try {
+            PBMobileAds.getInstance().log(LogType.INFOR, "ADInterstitial Placement '" + this.placement + "' - isReady: " + this.isReady() + " | isFetchingAD: " + this.isFetchingAD);
+            if (this.adUnitObj == null || this.isReady() || this.isFetchingAD) {
+                if (this.adUnitObj == null) {
+                    PBMobileAds.getInstance().log(LogType.INFOR, "ADInterstitial placement: " + this.placement + " is not ready to load.");
+                    this.getConfigAD();
+                    return;
+                }
                 return;
             }
-            return;
-        }
-        this.resetAD();
+            this.resetAD();
 
-        // Check Active
-        if (!this.adUnitObj.isActive || this.adUnitObj.adInfor.size() == 0) {
-            PBMobileAds.getInstance().log(LogType.INFOR, "ADInterstitial Placement '" + this.placement + "' is not active or not exist.");
-            return;
-        }
+            // Check Active
+            if (!this.adUnitObj.isActive || this.adUnitObj.adInfor.size() == 0) {
+                PBMobileAds.getInstance().log(LogType.INFOR, "ADInterstitial Placement '" + this.placement + "' is not active or not exist.");
+                return;
+            }
 
-        // Check AdInfor
-        final AdInfor adInfor = this.adUnitObj.adInfor.get(0); // PBMobileAds.getInstance().getAdInfor(isVideo, this.adUnitObj);
-        if (adInfor == null) {
-            PBMobileAds.getInstance().log(LogType.INFOR, "AdInfor of ADInterstitial Placement '" + this.placement + "' is not exist.");
-            return;
-        }
+            // Check AdInfor
+            final AdInfor adInfor = this.adUnitObj.adInfor.get(0); // PBMobileAds.getInstance().getAdInfor(isVideo, this.adUnitObj);
+            if (adInfor == null) {
+                PBMobileAds.getInstance().log(LogType.INFOR, "AdInfor of ADInterstitial Placement '" + this.placement + "' is not exist.");
+                return;
+            }
 
-        PBMobileAds.getInstance().log(LogType.INFOR, "Preload ADInterstitial Placement: " + this.placement);
-        PBMobileAds.getInstance().setupPBS(adInfor.host);
-        PBMobileAds.getInstance().log(LogType.DEBUG, "[ADInterstitial] - configId: " + adInfor.configId + " | adUnitID: " + adInfor.adUnitID);
+            PBMobileAds.getInstance().log(LogType.INFOR, "Preload ADInterstitial Placement: " + this.placement);
+            PBMobileAds.getInstance().setupPBS(adInfor.host);
+            PBMobileAds.getInstance().log(LogType.DEBUG, "[ADInterstitial] - configId: " + adInfor.configId + " | adUnitID: " + adInfor.adUnitID);
 
-        if (adInfor.adUnitID != null && !adInfor.adUnitID.isEmpty()) {
-            this.adUnit = new InterstitialAdUnit(adInfor.configId, EnumSet.of(AdUnitFormat.BANNER, AdUnitFormat.VIDEO));
+            if (adInfor.adUnitID != null && !adInfor.adUnitID.isEmpty()) {
+                this.adUnit = new InterstitialAdUnit(adInfor.configId, EnumSet.of(AdUnitFormat.BANNER, AdUnitFormat.VIDEO));
 
-            VideoParameters videoParameters = new VideoParameters(listOf("video/x-flv", "video/mp4"));
-            videoParameters.setPlacement(Signals.Placement.Interstitial);
-            this.adUnit.setVideoParameters(videoParameters);
+                VideoParameters videoParameters = new VideoParameters(listOf("video/x-flv", "video/mp4"));
+                videoParameters.setPlacement(Signals.Placement.Interstitial);
+                this.adUnit.setVideoParameters(videoParameters);
 
-            // Create Request PBS
-            this.isFetchingAD = true;
-            this.amRequest = new AdManagerAdRequest.Builder().build();
-            this.adUnit.fetchDemand(this.amRequest, new OnCompleteListener() {
-                @Override
-                public void onComplete(ResultCode resultCode) {
-                    PBMobileAds.getInstance().log(LogType.INFOR, "PBS demand fetch ADInterstitial placement '" + placement + "' for DFP: " + resultCode.name());
+                // Create Request PBS
+                this.isFetchingAD = true;
+                this.amRequest = new AdManagerAdRequest.Builder().build();
+                this.adUnit.fetchDemand(this.amRequest, new OnCompleteListener() {
+                    @Override
+                    public void onComplete(ResultCode resultCode) {
+                        PBMobileAds.getInstance().log(LogType.INFOR, "PBS demand fetch ADInterstitial placement '" + placement + "' for DFP: " + resultCode.name());
 
-                    AdManagerInterstitialAd.load(PBMobileAds.getInstance().getContextApp(), adInfor.adUnitID, amRequest, new AdManagerInterstitialAdLoadCallback() {
-                        @Override
-                        public void onAdLoaded(@NonNull AdManagerInterstitialAd adManagerInterstitialAd) {
-                            super.onAdLoaded(adManagerInterstitialAd);
-
-                            isHaveAds = true;
-                            isFetchingAD = false;
-                            amInterstitial = adManagerInterstitialAd;
-                            setAdsListener();
-
-                            PBMobileAds.getInstance().log(LogType.INFOR, "onAdLoaded: ADInterstitial Placement '" + placement + "'");
-                            if (adDelegate != null) adDelegate.onAdLoaded();
+                        if (amRequest == null) {
+                            PBMobileAds.getInstance().log(LogType.ERROR, "ADInterstitial Placement '" + placement + "' - amRequest is null");
+                            return;
                         }
+                        AdManagerInterstitialAd.load(PBMobileAds.getInstance().getContextApp(), adInfor.adUnitID, amRequest, new AdManagerInterstitialAdLoadCallback() {
+                            @Override
+                            public void onAdLoaded(@NonNull AdManagerInterstitialAd adManagerInterstitialAd) {
+                                super.onAdLoaded(adManagerInterstitialAd);
 
-                        @Override
-                        public void onAdFailedToLoad(@NonNull LoadAdError loadAdError) {
-                            super.onAdFailedToLoad(loadAdError);
+                                isHaveAds = true;
+                                isFetchingAD = false;
+                                amInterstitial = adManagerInterstitialAd;
+                                setAdsListener();
 
-                            isHaveAds = false;
-                            isFetchingAD = false;
-                            amInterstitial = null;
+                                PBMobileAds.getInstance().log(LogType.INFOR, "onAdLoaded: ADInterstitial Placement '" + placement + "'");
+                                if (adDelegate != null) adDelegate.onAdLoaded();
+                            }
 
-                            int errorCode = loadAdError.getCode();
-                            String messErr = "onAdFailedToLoad: ADInterstitial Placement '" + placement + "' with error: " + PBMobileAds.getInstance().getADError(errorCode);
-                            PBMobileAds.getInstance().log(LogType.INFOR, messErr);
-                            if (adDelegate != null) adDelegate.onAdFailedToLoad(messErr);
-                        }
-                    });
-                }
-            });
-        } else {
-            this.interstitialAdUnit = new org.prebid.mobile.api.rendering.InterstitialAdUnit(this.context, adInfor.configId, EnumSet.of(AdUnitFormat.BANNER, AdUnitFormat.VIDEO));
-            this.interstitialAdUnit.setInterstitialAdUnitListener(new InterstitialAdUnitListener() {
-                @Override
-                public void onAdLoaded(org.prebid.mobile.api.rendering.InterstitialAdUnit interstitialAdUnit) {
-                    isHaveAds = true;
-                    isFetchingAD = false;
-                    PBMobileAds.getInstance().log(LogType.INFOR, "onAdLoaded: ADInterstitial Placement '" + placement + "'");
-                    if (adDelegate != null) adDelegate.onAdLoaded();
-                }
+                            @Override
+                            public void onAdFailedToLoad(@NonNull LoadAdError loadAdError) {
+                                super.onAdFailedToLoad(loadAdError);
 
-                @Override
-                public void onAdDisplayed(org.prebid.mobile.api.rendering.InterstitialAdUnit interstitialAdUnit) {
-                    isHaveAds = false;
-                    PBMobileAds.getInstance().log(LogType.INFOR, "onAdDisplayed: ADInterstitial Placement '" + placement + "'");
-                    if (adDelegate != null) adDelegate.onAdOpened();
+                                isHaveAds = false;
+                                isFetchingAD = false;
+                                amInterstitial = null;
 
-                    BidResponse bidResponse = interstitialAdUnit.getBidResponse();
-                    if (bidResponse != null) {
-                        PBMobileAds.getInstance().log(LogType.INFOR, "onPaidEvent: ADInterstitial Placement '" + placement + "'");
-                        Bid bidWin = bidResponse.getWinningBid();
-                        AdData adData = new AdData(bidResponse.getCur(), 3, bidWin.getPrice() * 1000);
-                        if (adDelegate != null) adDelegate.onPaidEvent(adData);
+                                int errorCode = loadAdError.getCode();
+                                String messErr = "onAdFailedToLoad: ADInterstitial Placement '" + placement + "' with error: " + PBMobileAds.getInstance().getADError(errorCode);
+                                PBMobileAds.getInstance().log(LogType.INFOR, messErr);
+                                if (adDelegate != null) adDelegate.onAdFailedToLoad(messErr);
+                            }
+                        });
                     }
-                }
+                });
+            } else {
+                this.interstitialAdUnit = new org.prebid.mobile.api.rendering.InterstitialAdUnit(this.context, adInfor.configId, EnumSet.of(AdUnitFormat.BANNER, AdUnitFormat.VIDEO));
+                this.interstitialAdUnit.setInterstitialAdUnitListener(new InterstitialAdUnitListener() {
+                    @Override
+                    public void onAdLoaded(org.prebid.mobile.api.rendering.InterstitialAdUnit interstitialAdUnit) {
+                        isHaveAds = true;
+                        isFetchingAD = false;
+                        PBMobileAds.getInstance().log(LogType.INFOR, "onAdLoaded: ADInterstitial Placement '" + placement + "'");
+                        if (adDelegate != null) adDelegate.onAdLoaded();
+                    }
 
-                @Override
-                public void onAdFailed(org.prebid.mobile.api.rendering.InterstitialAdUnit interstitialAdUnit, AdException exception) {
-                    isHaveAds = false;
-                    isFetchingAD = false;
-                    String messErr = "onAdFailed: ADInterstitial Placement '" + placement + "' with error: " + exception.getMessage();
-                    PBMobileAds.getInstance().log(LogType.INFOR, messErr);
-                    if (adDelegate != null) adDelegate.onAdFailedToLoad(messErr);
-                }
+                    @Override
+                    public void onAdDisplayed(org.prebid.mobile.api.rendering.InterstitialAdUnit interstitialAdUnit) {
+                        isHaveAds = false;
+                        PBMobileAds.getInstance().log(LogType.INFOR, "onAdDisplayed: ADInterstitial Placement '" + placement + "'");
+                        if (adDelegate != null) adDelegate.onAdOpened();
 
-                @Override
-                public void onAdClicked(org.prebid.mobile.api.rendering.InterstitialAdUnit interstitialAdUnit) {
-                    PBMobileAds.getInstance().log(LogType.INFOR, "onAdClicked: ADInterstitial Placement '" + placement + "'");
-                    if (adDelegate != null) adDelegate.onAdClicked();
-                }
+                        BidResponse bidResponse = interstitialAdUnit.getBidResponse();
+                        if (bidResponse != null) {
+                            PBMobileAds.getInstance().log(LogType.INFOR, "onPaidEvent: ADInterstitial Placement '" + placement + "'");
+                            Bid bidWin = bidResponse.getWinningBid();
+                            AdData adData = new AdData(bidResponse.getCur(), 3, bidWin.getPrice() * 1000);
+                            if (adDelegate != null) adDelegate.onPaidEvent(adData);
+                        }
+                    }
 
-                @Override
-                public void onAdClosed(org.prebid.mobile.api.rendering.InterstitialAdUnit interstitialAdUnit) {
-                    PBMobileAds.getInstance().log(LogType.INFOR, "onAdClosed: ADInterstitial Placement '" + placement + "'");
-                    if (adDelegate != null) adDelegate.onAdClosed();
-                }
-            });
-            this.interstitialAdUnit.loadAd();
+                    @Override
+                    public void onAdFailed(org.prebid.mobile.api.rendering.InterstitialAdUnit interstitialAdUnit, AdException exception) {
+                        isHaveAds = false;
+                        isFetchingAD = false;
+                        String messErr = "onAdFailed: ADInterstitial Placement '" + placement + "' with error: " + exception.getMessage();
+                        PBMobileAds.getInstance().log(LogType.INFOR, messErr);
+                        if (adDelegate != null) adDelegate.onAdFailedToLoad(messErr);
+                    }
+
+                    @Override
+                    public void onAdClicked(org.prebid.mobile.api.rendering.InterstitialAdUnit interstitialAdUnit) {
+                        PBMobileAds.getInstance().log(LogType.INFOR, "onAdClicked: ADInterstitial Placement '" + placement + "'");
+                        if (adDelegate != null) adDelegate.onAdClicked();
+                    }
+
+                    @Override
+                    public void onAdClosed(org.prebid.mobile.api.rendering.InterstitialAdUnit interstitialAdUnit) {
+                        PBMobileAds.getInstance().log(LogType.INFOR, "onAdClosed: ADInterstitial Placement '" + placement + "'");
+                        if (adDelegate != null) adDelegate.onAdClosed();
+                    }
+                });
+                this.interstitialAdUnit.loadAd();
+            }
+        } catch (Exception e) {
+            PBMobileAds.getInstance().log(LogType.ERROR, "ADInterstitial Placement '" + this.placement + "' - preLoad error: " + e.getMessage());
         }
     }
 
