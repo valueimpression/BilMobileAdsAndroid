@@ -24,8 +24,12 @@
 #### Step 3: Add the dependency with latest version
 ```gradle
     dependencies {
-        implementation 'com.google.android.gms:play-services-ads:18.2.0'
-        implementation 'com.github.valueimpression:BilMobileAdsAndroid:1.5'
+        // ... other project dependencies
+
+        // This will get the latest available version of the ValueImpression SDK.
+        implementation 'org.prebid:prebid-mobile-sdk:2.1.3'
+        implementation 'com.google.android.gms:play-services-ads:22.2.0'
+        implementation 'com.github.valueimpression:BilMobileAdsAndroid:v2.2.3'
     }
 ```
 ## Note: Proguard 
